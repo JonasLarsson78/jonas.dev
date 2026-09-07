@@ -61,5 +61,26 @@ const yoga = createYoga({
 })
 
 export default defineEventHandler(async (event) => {
-  return yoga.handleNodeRequestAndResponse(event.node.req, event.node.res)
+  const req = event.node.req
+  const res = event.node.res
+
+  const url = `http://localhost${req.url}`
+  const headers = new Headers(req.headers as Record<string, string>)
+
+  const body = await new Promise<string | undefined>((resolve) => {
+    if (req.method === 'GET') return resolve(undefined)
+    let data = ''
+    req.on('data', (chunk: Buffer) => { data += chunk.toString() })
+    req.on('end', () => resolve(data))
+  })
+
+  const response = await yoga.fetch(url, {
+    method: req.method ?? 'GET',
+    headers,
+    body: body || undefined,
+  })
+
+  res.statusCode = response.status
+  response.headers.forEach((value, key) => res.setHeader(key, value))
+  res.end(await response.text())
 })

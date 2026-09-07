@@ -60,44 +60,60 @@ function pickResponse(messages: ChatMessage[]): string {
 
 export default defineEventHandler(async (event) => {
   const { messages } = await readBody(event) as { messages: ChatMessage[] }
-  if (!Array.isArray(messages) || !messages.length) throw createError({ statusCode: 400, message: 'messages required' })
+  if (!Array.isArray(messages) || !messages.length) {
+    throw createError({ statusCode: 400, message: 'messages required' })
+  }
 
-  setHeader(event, 'Content-Type', 'text/event-stream')
-  setHeader(event, 'Cache-Control', 'no-cache')
-  setHeader(event, 'Connection', 'keep-alive')
+  const res = event.node.res
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  })
+
+  const write = (data: object) => res.write(`data: ${JSON.stringify(data)}\n\n`)
 
   const apiKey = process.env.ANTHROPIC_API_KEY
 
   if (apiKey) {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1024, stream: true, system: "You are a helpful assistant in Jonas Larsson's developer portfolio.", messages }),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        stream: true,
+        system: "You are a helpful assistant in Jonas Larsson's developer portfolio.",
+        messages,
+      }),
     })
     const reader = response.body!.getReader()
     const dec = new TextDecoder()
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-      const lines = dec.decode(value).split('\n').filter(l => l.startsWith('data:'))
-      for (const line of lines) {
+      for (const line of dec.decode(value).split('\n').filter(l => l.startsWith('data:'))) {
         try {
           const ev = JSON.parse(line.slice(5)) as { type: string; delta?: { text?: string } }
           if (ev.type === 'content_block_delta' && ev.delta?.text) {
-            await send(event, `data: ${JSON.stringify({ type: 'delta', text: ev.delta.text })}\n\n`)
+            write({ type: 'delta', text: ev.delta.text })
           }
-        } catch { /* skip */ }
+        } catch { /* skip malformed */ }
       }
     }
   } else {
     const text = pickResponse(messages)
     for (let i = 0; i < text.length;) {
-      const chunk = text.slice(i, i + 3)
+      write({ type: 'delta', text: text.slice(i, i + 3) })
       i += 3
-      await send(event, `data: ${JSON.stringify({ type: 'delta', text: chunk })}\n\n`)
       await new Promise(r => setTimeout(r, 20))
     }
   }
 
-  await send(event, `data: ${JSON.stringify({ type: 'done' })}\n\n`)
+  write({ type: 'done' })
+  res.end()
 })

@@ -24,13 +24,17 @@ const tokenSet = ref<TokenSet | null>(null)
 const profileData = ref<{ user: object; tokenMeta: object } | null>(null)
 const profileError = ref('')
 
+function b64url(str: string): string {
+  return atob(str.replace(/-/g, '+').replace(/_/g, '/').padEnd(str.length + (4 - str.length % 4) % 4, '='))
+}
+
 const decoded = computed(() => {
   if (!tokenSet.value) return null
   const parts = tokenSet.value.accessToken.split('.')
   if (parts.length !== 3) return null
   try {
-    const header  = JSON.parse(atob(parts[0]))
-    const payload = JSON.parse(atob(parts[1]))
+    const header  = JSON.parse(b64url(parts[0]))
+    const payload = JSON.parse(b64url(parts[1]))
     return { header, payload, signature: parts[2].slice(0, 20) + '…' }
   } catch { return null }
 })
