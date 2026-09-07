@@ -13,7 +13,12 @@
     "demos/graphql",
     "demos/auth",
     "demos/mysql",
-    "demos/docker"
+    "demos/docker",
+    "demos/svelte",
+    "demos/github-actions",
+    "demos/mongodb",
+    "demos/scss",
+    "demos/vitest"
   ],
   "scripts": {
     "showcase":   "npm run dev --workspace=showcase",

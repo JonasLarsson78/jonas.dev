@@ -133,6 +133,66 @@ const technologies: Tech[] = [
     demoStatus: 'live',
     cardGlow: 'rgba(217, 119, 6, 0.07)',
   },
+  {
+    id: 'svelte',
+    name: 'Svelte',
+    icon: '🔥',
+    category: 'frontend',
+    categoryLabel: 'Frontend',
+    description: 'A reactive task board built with Svelte 4. No virtual DOM — compiled to vanilla JS. Stores, transitions, flip animations, and $: reactive labels.',
+    tags: ['Svelte stores', 'Transitions', 'animate:flip', 'Compiled'],
+    demoUrl: '/demos/svelte/',
+    demoStatus: 'live',
+    cardGlow: 'rgba(255, 62, 0, 0.07)',
+  },
+  {
+    id: 'github-actions',
+    name: 'GitHub Actions',
+    icon: '⚙️',
+    category: 'devops',
+    categoryLabel: 'DevOps',
+    description: 'The actual CI/CD pipeline that builds and deploys this portfolio — type checks, demo builds, and Vercel deployment on every push to main.',
+    tags: ['CI/CD', 'YAML', 'Secrets', 'Matrix builds'],
+    demoUrl: '/demos/github-actions/',
+    demoStatus: 'live',
+    cardGlow: 'rgba(34, 197, 94, 0.06)',
+  },
+  {
+    id: 'mongodb',
+    name: 'MongoDB',
+    icon: '🍃',
+    category: 'backend',
+    categoryLabel: 'Backend',
+    description: 'NoSQL document database. Schema, Mongoose models, find() with populate(), insertOne(), and aggregation pipeline — compared against SQL.',
+    tags: ['Documents', 'Mongoose', 'Aggregation', 'populate()'],
+    demoUrl: '/demos/mongodb/',
+    demoStatus: 'live',
+    cardGlow: 'rgba(0, 163, 75, 0.07)',
+  },
+  {
+    id: 'scss',
+    name: 'SCSS',
+    icon: '🎨',
+    category: 'frontend',
+    categoryLabel: 'Frontend',
+    description: 'Variables, nesting, mixins, @each loops, and an interactive Flexbox/Grid playground — all the SCSS patterns used across this portfolio.',
+    tags: ['Variables', 'Mixins', 'Nesting', 'Flexbox & Grid'],
+    demoUrl: '/demos/scss/',
+    demoStatus: 'live',
+    cardGlow: 'rgba(204, 102, 153, 0.07)',
+  },
+  {
+    id: 'vitest',
+    name: 'Vitest',
+    icon: '🧪',
+    category: 'frontend',
+    categoryLabel: 'Frontend',
+    description: 'Vite-native unit testing. Animated test runner UI showing Pinia store tests, Vue component tests with @vue/test-utils, and coverage reports.',
+    tags: ['Unit tests', '@vue/test-utils', 'Pinia testing', 'Coverage'],
+    demoUrl: '/demos/vitest/',
+    demoStatus: 'live',
+    cardGlow: 'rgba(252, 211, 77, 0.06)',
+  },
 ]
 
 type FilterCategory = 'all' | 'frontend' | 'backend' | 'ai' | 'devops'
@@ -267,7 +327,7 @@ function handleCardClick(tech: Tech) {
             <div class="stat-label">Years experience</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">9</div>
+            <div class="stat-number">{{ technologies.length }}</div>
             <div class="stat-label">Live demos</div>
           </div>
           <div class="stat-card">
