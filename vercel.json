@@ -1,5 +1,4 @@
 {
   "buildCommand": "bash showcase/build-demos.sh && cd showcase && npx nuxt build",
-  "outputDirectory": "showcase/.output/public",
   "installCommand": "npm install"
 }
