@@ -1,7 +1,7 @@
 import { createSchema, createYoga } from 'graphql-yoga'
 
-interface GqlUser  { id: string; name: string; email: string; role: string }
-interface GqlTask  { id: string; title: string; description: string; status: string; priority: string; authorId: string }
+interface GqlUser { id: string; name: string; email: string; role: string }
+interface GqlTask { id: string; title: string; description: string; status: string; priority: string; authorId: string }
 
 const users: GqlUser[] = [
   { id: 'u1', name: 'Jonas Larsson', email: 'jonas@demo.com', role: 'admin' },
@@ -10,11 +10,11 @@ const users: GqlUser[] = [
 ]
 
 const tasks: GqlTask[] = [
-  { id: 't1', title: 'Design GraphQL schema',  description: 'Define types, queries, mutations', status: 'done',        priority: 'high',   authorId: 'u1' },
-  { id: 't2', title: 'Implement resolvers',    description: 'Write resolver functions',         status: 'done',        priority: 'high',   authorId: 'u1' },
-  { id: 't3', title: 'Add authentication',     description: 'Protect mutations with JWT',       status: 'in_progress', priority: 'medium', authorId: 'u2' },
-  { id: 't4', title: 'Write integration tests',description: 'Test all queries and mutations',   status: 'todo',        priority: 'medium', authorId: 'u3' },
-  { id: 't5', title: 'Deploy to production',   description: 'Set up CI/CD pipeline',            status: 'todo',        priority: 'low',    authorId: 'u2' },
+  { id: 't1', title: 'Design GraphQL schema',   description: 'Define types, queries, mutations', status: 'done',        priority: 'high',   authorId: 'u1' },
+  { id: 't2', title: 'Implement resolvers',      description: 'Write resolver functions',         status: 'done',        priority: 'high',   authorId: 'u1' },
+  { id: 't3', title: 'Add authentication',       description: 'Protect mutations with JWT',       status: 'in_progress', priority: 'medium', authorId: 'u2' },
+  { id: 't4', title: 'Write integration tests',  description: 'Test all queries and mutations',   status: 'todo',        priority: 'medium', authorId: 'u3' },
+  { id: 't5', title: 'Deploy to production',     description: 'Set up CI/CD pipeline',            status: 'todo',        priority: 'low',    authorId: 'u2' },
 ]
 
 const yoga = createYoga({
@@ -50,7 +50,14 @@ const yoga = createYoga({
       Task: { author: (t: GqlTask) => users.find(u => u.id === t.authorId)! },
       Mutation: {
         createTask: (_: unknown, { input }: { input: { title: string; description?: string; priority?: string; authorId: string } }) => {
-          const t: GqlTask = { id: Math.random().toString(36).slice(2,7), title: input.title, description: input.description ?? '', status: 'todo', priority: (input.priority ?? 'medium'), authorId: input.authorId }
+          const t: GqlTask = {
+            id: Math.random().toString(36).slice(2, 7),
+            title: input.title,
+            description: input.description ?? '',
+            status: 'todo',
+            priority: input.priority ?? 'medium',
+            authorId: input.authorId,
+          }
           tasks.push(t)
           return t
         },
@@ -61,26 +68,16 @@ const yoga = createYoga({
 })
 
 export default defineEventHandler(async (event) => {
-  const req = event.node.req
-  const res = event.node.res
+  const method = event.node.req.method ?? 'GET'
+  const url    = `http://localhost${event.node.req.url}`
+  const headers = new Headers(event.node.req.headers as Record<string, string>)
+  const body    = method !== 'GET' && method !== 'HEAD'
+    ? await readRawBody(event)
+    : undefined
 
-  const url = `http://localhost${req.url}`
-  const headers = new Headers(req.headers as Record<string, string>)
+  const response = await yoga.fetch(url, { method, headers, body })
 
-  const body = await new Promise<string | undefined>((resolve) => {
-    if (req.method === 'GET') return resolve(undefined)
-    let data = ''
-    req.on('data', (chunk: Buffer) => { data += chunk.toString() })
-    req.on('end', () => resolve(data))
-  })
-
-  const response = await yoga.fetch(url, {
-    method: req.method ?? 'GET',
-    headers,
-    body: body || undefined,
-  })
-
-  res.statusCode = response.status
-  response.headers.forEach((value, key) => res.setHeader(key, value))
-  res.end(await response.text())
+  event.node.res.statusCode = response.status
+  response.headers.forEach((value, key) => event.node.res.setHeader(key, value))
+  event.node.res.end(await response.text())
 })
