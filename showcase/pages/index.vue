@@ -154,7 +154,7 @@ const filteredTech = computed(() =>
 
 function handleCardClick(tech: Tech) {
   if (tech.demoUrl) {
-    window.open(tech.demoUrl, '_blank')
+    window.location.href = tech.demoUrl
   }
 }
 </script>
