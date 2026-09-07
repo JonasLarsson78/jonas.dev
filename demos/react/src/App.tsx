@@ -19,7 +19,7 @@ export default function App() {
     <div className="app">
       {/* Topbar */}
       <div className="topbar">
-        <a href={import.meta.env.VITE_PORTFOLIO_URL || 'http://localhost:3000'} className="back-link">← Portfolio</a>
+        <a href="/" className="back-link">← Portfolio</a>
         <div className="topbar-center">
           <span className="tech-badge react">React 18</span>
           <span className="tech-badge ts">TypeScript</span>

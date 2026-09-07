@@ -3,8 +3,8 @@ import { ref, nextTick, onMounted } from 'vue'
 import ChatMessage from './components/ChatMessage.vue'
 import type { Message } from './types'
 
-const API_URL      = (import.meta.env.VITE_API_URL || 'http://localhost:3003') + '/api/chat/stream'
-const portfolioUrl = import.meta.env.VITE_PORTFOLIO_URL || 'http://localhost:3000'
+const API_URL      = '/api/chat/stream'
+const portfolioUrl = '/'
 
 const messages = ref<Message[]>([
   {

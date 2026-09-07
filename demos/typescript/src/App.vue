@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-const portfolioUrl = import.meta.env.VITE_PORTFOLIO_URL || 'http://localhost:3000'
+const portfolioUrl = '/'
 
 // ─── Types used in this demo ────────────────────────────────────────────────
 
@@ -17,8 +17,12 @@ interface Task {
 
 // Utility types: derive new types from existing ones without duplication
 type CreateTask  = Omit<Task, 'id'>
-type UpdateTask  = Partial<CreateTask>
+type UpdateTask  = Partial<CreateTask>  // used for PATCH — Partial makes all fields optional
 type TaskSummary = Pick<Task, 'id' | 'title'>
+
+// Satisfy the compiler — UpdateTask is shown in the demo code block
+const _updateExample: UpdateTask = { title: 'New title' }
+void _updateExample
 
 // Discriminated union: exhaustive API response modelling
 type ApiResponse<T> =

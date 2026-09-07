@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-const gqlUrl    = import.meta.env.VITE_GQL_URL || 'http://localhost:4001'
-const GQL_URL   = gqlUrl + '/graphql'
-const portfolioUrl = import.meta.env.VITE_PORTFOLIO_URL || 'http://localhost:3000'
+const GQL_URL      = '/api/graphql'
+const portfolioUrl = '/'
 
 interface GqlTask { id: string; title: string; status: string; priority: string; author: { name: string } }
 interface GqlUser { id: string; name: string; email: string; role: string; tasks: { id: string; title: string }[] }
@@ -197,7 +196,7 @@ const priorityColor: Record<string, string> = {
         <span class="badge node">graphql-yoga</span>
         <span class="badge ts">TypeScript</span>
       </div>
-      <a :href="gqlUrl + '/graphql'" target="_blank" class="graphiql-link">Open GraphiQL →</a>
+      <a href="/api/graphql" target="_blank" class="graphiql-link">Open GraphiQL →</a>
     </div>
 
     <div class="container">

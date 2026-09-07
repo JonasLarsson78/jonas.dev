@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const API          = (import.meta.env.VITE_API_URL || 'http://localhost:3003') + '/api/db'
-const portfolioUrl = import.meta.env.VITE_PORTFOLIO_URL || 'http://localhost:3000'
+const API          = '/api/db'
+const portfolioUrl = '/'
 
 type Tab = 'schema' | 'tasks' | 'insert' | 'stats'
 const activeTab = ref<Tab>('schema')
@@ -12,7 +12,9 @@ interface DbUser { id: number; name: string; email: string; role: string; create
 interface StatRow { name: string; total_tasks: number; done: number; in_progress: number; todo: number }
 
 const tasksData   = ref<{ data: DbTask[]; count: number; sql: string; params: object } | null>(null)
-const usersData   = ref<DbUser[] | null>(null)
+// usersData used in schema tab via static display
+const _usersData  = ref<DbUser[] | null>(null)
+void _usersData
 const statsData   = ref<StatRow[] | null>(null)
 const insertResult = ref<{ data: DbTask; sql: string } | null>(null)
 const loading     = ref(false)
@@ -43,10 +45,6 @@ async function fetchTasks() {
   tasksData.value = await query(`${API}/tasks?${params}`)
 }
 
-async function fetchUsers() {
-  const res = await query<{ data: DbUser[] }>(`${API}/users`)
-  usersData.value = res?.data ?? null
-}
 
 async function fetchStats() {
   statsData.value = (await query<{ data: StatRow[] }>(`${API}/stats`))?.data ?? null

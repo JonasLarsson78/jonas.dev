@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const portfolioUrl = import.meta.env.VITE_PORTFOLIO_URL || 'http://localhost:3000'
+const portfolioUrl = '/'
 
 type Tab = 'compose' | 'dockerfiles' | 'commands'
 const activeTab = ref<Tab>('compose')

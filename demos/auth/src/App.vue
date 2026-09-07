@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-const API          = import.meta.env.VITE_API_URL || 'http://localhost:3003'
-const portfolioUrl = import.meta.env.VITE_PORTFOLIO_URL || 'http://localhost:3000'
+const API          = ''
+const portfolioUrl = '/'
 
 type Tab = 'jwt' | 'oauth2'
 const activeTab = ref<Tab>('jwt')
@@ -88,7 +88,7 @@ const oauthCode = ref('')
 const oauthTokens = ref<Partial<TokenSet> | null>(null)
 const oauthError = ref('')
 const oauthClientId = ref('demo-client-app')
-const oauthRedirectUri = ref((import.meta.env.VITE_SELF_URL || 'http://localhost:3007') + '/callback')
+const oauthRedirectUri = ref(window.location.origin + '/demos/auth/callback')
 
 async function startOAuth() {
   oauthStep.value = 'authorizing'

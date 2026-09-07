@@ -5,7 +5,7 @@ import { useTaskStore } from './stores/tasks'
 import type { Column } from './types'
 
 const store        = useTaskStore()
-const portfolioUrl = import.meta.env.VITE_PORTFOLIO_URL || 'http://localhost:3000'
+const portfolioUrl = '/'
 
 const columns: Column[] = [
   { id: 'todo', label: 'To Do', color: '#64748b', accent: 'rgba(100, 116, 139, 0.15)' },

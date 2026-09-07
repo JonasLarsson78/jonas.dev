@@ -12,9 +12,6 @@ interface Tech {
   cardGlow: string
 }
 
-const config = useRuntimeConfig()
-const c = config.public
-
 const technologies: Tech[] = [
   {
     id: 'nuxt',
@@ -36,7 +33,7 @@ const technologies: Tech[] = [
     categoryLabel: 'Frontend',
     description: 'A Kanban task board built with Vue 3. Composition API, <script setup>, Pinia state management, and drag & drop.',
     tags: ['Composition API', 'Pinia', 'TypeScript', 'Vite'],
-    demoUrl: c.demoVue,
+    demoUrl: '/demos/vue/',
     demoStatus: 'live',
     cardGlow: 'rgba(66, 184, 131, 0.08)',
   },
@@ -48,7 +45,7 @@ const technologies: Tech[] = [
     categoryLabel: 'Frontend',
     description: 'An analytics dashboard built with React. Custom hooks, Context API, and data visualization — all type-safe.',
     tags: ['Hooks', 'Context API', 'TypeScript', 'Vite'],
-    demoUrl: c.demoReact,
+    demoUrl: '/demos/react/',
     demoStatus: 'live',
     cardGlow: 'rgba(97, 218, 251, 0.06)',
   },
@@ -60,7 +57,7 @@ const technologies: Tech[] = [
     categoryLabel: 'Frontend',
     description: 'Interactive showcase of the TypeScript patterns used across this portfolio: generics, utility types, discriminated unions, and type guards.',
     tags: ['Strict mode', 'Generics', 'Utility types', 'Type guards'],
-    demoUrl: c.demoTypescript,
+    demoUrl: '/demos/typescript/',
     demoStatus: 'live',
     cardGlow: 'rgba(49, 120, 198, 0.08)',
   },
@@ -72,7 +69,7 @@ const technologies: Tech[] = [
     categoryLabel: 'Backend',
     description: 'A REST API built with Node.js and Express. TypeScript, middleware, JWT auth, CORS, SQLite — the backbone of all demos.',
     tags: ['Express', 'REST API', 'TypeScript', 'Middleware'],
-    demoUrl: c.demoNodeApi,
+    demoUrl: '/api/tasks',
     demoStatus: 'live',
     cardGlow: 'rgba(51, 153, 51, 0.07)',
   },
@@ -84,7 +81,7 @@ const technologies: Tech[] = [
     categoryLabel: 'Backend',
     description: 'A graphql-yoga server with a fully typed schema — queries, mutations, enums, nested resolvers, and filtering. Interactive query builder included.',
     tags: ['graphql-yoga', 'SDL schema', 'Resolvers', 'TypeScript'],
-    demoUrl: c.demoGraphql,
+    demoUrl: '/demos/graphql/',
     demoStatus: 'live',
     cardGlow: 'rgba(225, 0, 152, 0.07)',
   },
@@ -96,7 +93,7 @@ const technologies: Tech[] = [
     categoryLabel: 'Backend',
     description: 'Login, receive a JWT, decode its structure, call a protected endpoint, and walk through the OAuth2 authorization code flow step by step.',
     tags: ['jsonwebtoken', 'OAuth2', 'Express', 'TypeScript'],
-    demoUrl: c.demoAuth,
+    demoUrl: '/demos/auth/',
     demoStatus: 'live',
     cardGlow: 'rgba(234, 179, 8, 0.07)',
   },
@@ -108,7 +105,7 @@ const technologies: Tech[] = [
     categoryLabel: 'Backend',
     description: 'Real SQL running against SQLite (MySQL-compatible syntax). Schema with foreign keys, indexes, INNER JOIN, GROUP BY, and aggregate functions.',
     tags: ['SQL', 'INNER JOIN', 'GROUP BY', 'better-sqlite3'],
-    demoUrl: c.demoMysql,
+    demoUrl: '/demos/mysql/',
     demoStatus: 'live',
     cardGlow: 'rgba(0, 117, 143, 0.07)',
   },
@@ -120,7 +117,7 @@ const technologies: Tech[] = [
     categoryLabel: 'DevOps',
     description: 'Production-ready Dockerfiles for every service in this portfolio, orchestrated with Docker Compose. Multi-stage builds, healthchecks, secret injection.',
     tags: ['Dockerfile', 'Compose', 'Multi-stage', 'nginx'],
-    demoUrl: c.demoDocker,
+    demoUrl: '/demos/docker/',
     demoStatus: 'live',
     cardGlow: 'rgba(36, 150, 237, 0.07)',
   },
@@ -132,7 +129,7 @@ const technologies: Tech[] = [
     categoryLabel: 'AI',
     description: 'A streaming chat assistant backed by the Claude API. Vue 3 frontend, Node.js proxy — the API key never touches the client.',
     tags: ['Claude API', 'SSE streaming', 'Vue 3', 'Secure proxy'],
-    demoUrl: c.demoAi,
+    demoUrl: '/demos/ai/',
     demoStatus: 'live',
     cardGlow: 'rgba(217, 119, 6, 0.07)',
   },

@@ -4,10 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "nuxt dev --port 3000",
-    "build": "nuxt build",
+    "build": "bash build-demos.sh && nuxt build",
     "preview": "nuxt preview"
   },
   "dependencies": {
+    "graphql": "^16.10.0",
+    "graphql-yoga": "^5.12.0",
+    "jose": "^5.10.0",
     "nuxt": "^3.13.0"
   }
 }
