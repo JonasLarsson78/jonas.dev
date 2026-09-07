@@ -20,8 +20,21 @@ const tasks: GqlTask[] = [
 
 const schema = createSchema({
   typeDefs: /* GraphQL */ `
-    type User { id: ID!; name: String!; email: String!; role: Role!; tasks: [Task!]! }
-    type Task { id: ID!; title: String!; description: String!; status: TaskStatus!; priority: Priority!; author: User! }
+    type User {
+      id: ID!
+      name: String!
+      email: String!
+      role: Role!
+      tasks: [Task!]!
+    }
+    type Task {
+      id: ID!
+      title: String!
+      description: String!
+      status: TaskStatus!
+      priority: Priority!
+      author: User!
+    }
     enum Role       { admin user }
     enum TaskStatus { todo in_progress done }
     enum Priority   { low medium high }
@@ -31,8 +44,15 @@ const schema = createSchema({
       tasks(status: TaskStatus, priority: Priority): [Task!]!
       task(id: ID!): Task
     }
-    input CreateTaskInput { title: String!; description: String; priority: Priority; authorId: ID! }
-    type Mutation { createTask(input: CreateTaskInput!): Task! }
+    input CreateTaskInput {
+      title: String!
+      description: String
+      priority: Priority
+      authorId: ID!
+    }
+    type Mutation {
+      createTask(input: CreateTaskInput!): Task!
+    }
   `,
   resolvers: {
     Query: {
