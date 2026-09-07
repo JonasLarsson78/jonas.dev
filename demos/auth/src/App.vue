@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-const API          = ''
+const API          = '/api'
 const portfolioUrl = '/'
 
 type Tab = 'jwt' | 'oauth2'
