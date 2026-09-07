@@ -267,7 +267,7 @@ function handleCardClick(tech: Tech) {
             <div class="stat-label">Years experience</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">5</div>
+            <div class="stat-number">9</div>
             <div class="stat-label">Live demos</div>
           </div>
           <div class="stat-card">
