@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "nuxt dev --port 3000",
-    "build": "bash build-demos.sh && nuxt build",
+    "build": "nuxt build",
     "preview": "nuxt preview"
   },
   "dependencies": {
