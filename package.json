@@ -1,0 +1,35 @@
+{
+  "name": "jonas-tech-cv",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "showcase",
+    "demos/vue",
+    "demos/react",
+    "demos/node-api",
+    "demos/ai",
+    "demos/typescript",
+    "demos/graphql-api",
+    "demos/graphql",
+    "demos/auth",
+    "demos/mysql",
+    "demos/docker"
+  ],
+  "scripts": {
+    "showcase":   "npm run dev --workspace=showcase",
+    "vue":        "npm run dev --workspace=demos/vue",
+    "react":      "npm run dev --workspace=demos/react",
+    "api":        "npm run dev --workspace=demos/node-api",
+    "ai":         "npm run dev --workspace=demos/ai",
+    "ts":         "npm run dev --workspace=demos/typescript",
+    "gql-api":    "npm run dev --workspace=demos/graphql-api",
+    "gql":        "npm run dev --workspace=demos/graphql",
+    "auth":       "npm run dev --workspace=demos/auth",
+    "mysql":      "npm run dev --workspace=demos/mysql",
+    "docker":     "npm run dev --workspace=demos/docker",
+    "dev": "concurrently -n \"showcase,vue,react,api,ai,ts,gql-api,gql,auth,mysql,docker\" -c \"cyan,green,blue,yellow,magenta,white,red,redBright,yellowBright,greenBright,blueBright\" \"npm run showcase\" \"npm run vue\" \"npm run react\" \"npm run api\" \"npm run ai\" \"npm run ts\" \"npm run gql-api\" \"npm run gql\" \"npm run auth\" \"npm run mysql\" \"npm run docker\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
