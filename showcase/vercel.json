@@ -1,0 +1,4 @@
+{
+  "installCommand": "cd .. && npm install",
+  "buildCommand": "cd .. && bash showcase/build-demos.sh && cd showcase && npx nuxt build"
+}
