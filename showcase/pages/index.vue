@@ -228,7 +228,7 @@ function handleCardClick(tech: Tech) {
       <ul class="nav-links">
         <li><a href="#demos">Demos</a></li>
         <li><a href="#about">About</a></li>
-        <li><a href="https://github.com" target="_blank">GitHub</a></li>
+        <li><a href="https://github.com/JonasLarsson78/jonas.dev" target="_blank">GitHub</a></li>
       </ul>
     </nav>
 
