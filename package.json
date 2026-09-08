@@ -14,7 +14,6 @@
     "demos/auth",
     "demos/mysql",
     "demos/docker",
-    "demos/svelte",
     "demos/github-actions",
     "demos/mongodb",
     "demos/scss",

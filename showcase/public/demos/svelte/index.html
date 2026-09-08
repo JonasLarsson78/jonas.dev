@@ -1,14 +1,324 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Svelte Demo | Jonas Larsson</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <style>*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; } html, body { background: #060610; color: #e2e8f0; font-family: 'Inter', sans-serif; min-height: 100vh; }</style>
-    <script type="module" crossorigin src="/demos/svelte/assets/index-D65ZwUUK.js"></script>
-    <link rel="stylesheet" crossorigin href="/demos/svelte/assets/index-BDjZO_UA.css">
-  </head>
-  <body><div id="app"></div></body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Svelte Demo | Jonas Larsson</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #060610; color: #e2e8f0; font-family: 'Inter', sans-serif; min-height: 100vh; }
+
+    .topbar { background: rgba(6,6,16,.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,.06); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .back-link { font-size: 13px; color: #64748b; text-decoration: none; font-weight: 500; }
+    .back-link:hover { color: #e2e8f0; }
+    .center { display: flex; gap: 6px; }
+    .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .badge-orange { background: rgba(255,62,0,.12); border: 1px solid rgba(255,62,0,.3); color: #ff6b35; }
+    .badge-purple { background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.25); color: #818cf8; }
+    .badge-green  { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25); color: #22c55e; }
+
+    .container { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+    .page-title { font-size: 30px; font-weight: 800; letter-spacing: -.03em; margin-bottom: 10px; }
+    .page-subtitle { font-size: 15px; color: #64748b; line-height: 1.6; max-width: 560px; margin-bottom: 32px; }
+    .page-subtitle code { font-family: 'JetBrains Mono', monospace; color: #818cf8; background: rgba(99,102,241,.08); border-radius: 4px; padding: 1px 6px; }
+
+    .tabs { display: flex; gap: 6px; margin-bottom: 20px; }
+    .tab { padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; background: transparent; border: 1px solid rgba(255,255,255,.06); color: #64748b; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .tab:hover { color: #e2e8f0; }
+    .tab.active { background: rgba(255,62,0,.1); border-color: rgba(255,62,0,.3); color: #ff6b35; }
+
+    .panel { background: #0a0a18; border: 1px solid rgba(255,255,255,.05); border-radius: 14px; padding: 28px; display: none; }
+    .panel.active { display: flex; flex-direction: column; gap: 20px; }
+
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .code-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #475569; margin-bottom: 10px; }
+    .codeblock { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; color: #94a3b8; background: #060610; border: 1px solid rgba(255,255,255,.05); border-radius: 8px; padding: 16px; white-space: pre; overflow-x: auto; }
+    .kw { color: #818cf8; } .fn { color: #60a5fa; } .str { color: #fb923c; }
+    .comment { color: #374151; font-style: italic; } .hl { color: #ff6b35; }
+
+    .stats-row { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .stat-num { font-size: 28px; font-weight: 800; color: #94a3b8; }
+    .stat-num.green { color: #22c55e; } .stat-num.amber { color: #f59e0b; }
+    .stat-lbl { font-size: 11px; color: #475569; text-transform: uppercase; letter-spacing: .07em; }
+    .progress-wrap { flex: 1; min-width: 140px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 6px; }
+    .pct { color: #22c55e; font-weight: 600; }
+    .track { height: 4px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+    .fill { height: 100%; background: linear-gradient(90deg,#22c55e,#16a34a); border-radius: 2px; transition: width .5s ease; }
+
+    .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .inp { flex: 1; min-width: 180px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 9px 13px; font-size: 13px; color: #e2e8f0; font-family: inherit; outline: none; }
+    .inp:focus { border-color: rgba(255,62,0,.4); }
+    .btn-add { padding: 9px 18px; border-radius: 8px; background: rgba(255,62,0,.15); border: 1px solid rgba(255,62,0,.3); color: #ff6b35; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .chk-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #64748b; cursor: pointer; }
+
+    .task-list { display: flex; flex-direction: column; gap: 6px; }
+    .task-item { display: flex; align-items: center; gap: 10px; background: #0d0d1a; border: 1px solid rgba(255,255,255,.06); border-radius: 9px; padding: 12px 14px; animation: slideIn .2s ease; }
+    @keyframes slideIn { from { opacity:0; transform: translateY(-8px); } to { opacity:1; transform:none; } }
+    .task-item.done .task-title { text-decoration: line-through; color: #475569; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .task-title { flex: 1; font-size: 14px; color: #94a3b8; }
+    .btn-toggle { background: none; border: none; cursor: pointer; font-size: 15px; padding: 2px 8px; border-radius: 5px; color: #64748b; }
+    .btn-toggle:hover { color: #22c55e; background: rgba(34,197,94,.08); }
+    .btn-del { background: none; border: none; cursor: pointer; font-size: 18px; padding: 0 4px; color: #334155; }
+    .btn-del:hover { color: #ef4444; }
+    .empty { text-align: center; color: #334155; font-size: 13px; padding: 24px; }
+
+    .counter-row { display: flex; align-items: center; gap: 20px; justify-content: center; margin: 20px 0; }
+    .cbtn { width: 40px; height: 40px; border-radius: 8px; background: rgba(255,62,0,.12); border: 1px solid rgba(255,62,0,.25); color: #ff6b35; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .cval { font-size: 48px; font-weight: 800; color: #e2e8f0; min-width: 80px; text-align: center; transition: color .15s; }
+    .rv-list { display: flex; flex-direction: column; gap: 8px; }
+    .rv-row { display: flex; align-items: center; justify-content: space-between; background: #060610; border: 1px solid rgba(255,255,255,.05); border-radius: 7px; padding: 8px 12px; }
+    .rv-key { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #64748b; }
+    .rv-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #94a3b8; transition: color .2s; }
+    .rv-val.purple { color: #818cf8; }
+    .rv-val.c-green { color: #22c55e; }
+    .rv-val.c-red   { color: #ef4444; }
+
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .concept { background: #0d0d1a; border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+    .cicon { font-size: 20px; font-weight: 700; color: #ff6b35; font-family: 'JetBrains Mono', monospace; }
+    .ctitle { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+    .cbody { font-size: 12px; color: #64748b; line-height: 1.6; }
+
+    @media(max-width:680px) { .split{grid-template-columns:1fr} .grid3{grid-template-columns:1fr 1fr} }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/" class="back-link">← Portfolio</a>
+  <div class="center">
+    <span class="badge badge-orange">Svelte 4</span>
+    <span class="badge badge-purple">Stores</span>
+    <span class="badge badge-green">Transitions</span>
+  </div>
+  <div style="width:100px"></div>
+</div>
+
+<div class="container">
+  <h1 class="page-title">Svelte Demo</h1>
+  <p class="page-subtitle">
+    Svelte compiles to vanilla JS — no virtual DOM, no runtime overhead.
+    Reactivity is built into the language with <code>$:</code> labels and stores.
+  </p>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="tasks">Task Board</button>
+    <button class="tab" data-tab="reactive">Reactive ($:)</button>
+    <button class="tab" data-tab="concepts">Key Concepts</button>
+  </div>
+
+  <div id="tab-tasks" class="panel active">
+    <div class="stats-row">
+      <div class="stat"><div class="stat-num" id="s-total">5</div><div class="stat-lbl">Total</div></div>
+      <div class="stat"><div class="stat-num green" id="s-done">2</div><div class="stat-lbl">Done</div></div>
+      <div class="stat"><div class="stat-num amber" id="s-active">3</div><div class="stat-lbl">Active</div></div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progress</span><span class="pct" id="s-pct">40%</span></div>
+        <div class="track"><div class="fill" id="s-fill" style="width:40%"></div></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input id="new-task" class="inp" placeholder="New task..." />
+      <button class="btn-add" id="btn-add">Add</button>
+      <label class="chk-label"><input type="checkbox" id="filter-done" /> Active only</label>
+    </div>
+
+    <div class="task-list" id="task-list"></div>
+
+    <div class="code-label">The Svelte equivalent</div>
+    <pre class="codeblock"><span class="comment">// writable store — reactive across components</span>
+<span class="kw">const</span> tasks = <span class="fn">writable</span>([...])
+
+<span class="comment">// derived store — auto-updates when tasks changes</span>
+<span class="kw">const</span> stats = <span class="fn">derived</span>(tasks, <span class="hl">$tasks</span> => ({
+  done: <span class="hl">$tasks</span>.filter(t => t.done).length,
+  progress: Math.<span class="fn">round</span>(done / total * <span class="str">100</span>),
+}))
+
+<span class="comment">// template — animate:flip reorders with animation</span>
+{#<span class="kw">each</span> filtered <span class="kw">as</span> task (task.id)}
+  &lt;div <span class="hl">animate:flip</span>={{ duration: 250 }}
+       <span class="hl">in:fly</span>={{ y: -12 }}
+       <span class="hl">out:slide</span>={{ duration: 180 }}&gt;
+    {task.title}
+  &lt;/div&gt;
+{/each}</pre>
+  </div>
+
+  <div id="tab-reactive" class="panel">
+    <div class="split">
+      <div>
+        <div class="code-label">Reactive declarations with <code style="color:#ff6b35;font-family:monospace">$:</code></div>
+        <pre class="codeblock"><span class="kw">let</span> count = <span class="str">0</span>
+
+<span class="comment">// $: re-runs whenever count changes</span>
+<span class="hl">$:</span> doubled = count * <span class="str">2</span>
+<span class="hl">$:</span> isEven  = count % <span class="str">2</span> === <span class="str">0</span>
+<span class="hl">$:</span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'count changed:'</span>, count)</pre>
+
+        <div class="counter-row">
+          <button class="cbtn" id="btn-dec">−</button>
+          <div class="cval" id="cval">0</div>
+          <button class="cbtn" id="btn-inc">+</button>
+        </div>
+
+        <div class="rv-list">
+          <div class="rv-row"><span class="rv-key">count</span><span class="rv-val" id="rv-count">0</span></div>
+          <div class="rv-row"><span class="rv-key">doubled</span><span class="rv-val purple" id="rv-doubled">0</span></div>
+          <div class="rv-row"><span class="rv-key">isEven</span><span class="rv-val c-green" id="rv-iseven">true</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="code-label">Svelte stores vs Vue / React</div>
+        <pre class="codeblock"><span class="comment">// Svelte store</span>
+<span class="kw">const</span> count = <span class="fn">writable</span>(<span class="str">0</span>)
+<span class="hl">$count</span>   <span class="comment">// auto-subscribe in template</span>
+
+<span class="comment">// React equivalent</span>
+<span class="kw">const</span> [count, setCount] = <span class="fn">useState</span>(<span class="str">0</span>)
+
+<span class="comment">// Vue equivalent</span>
+<span class="kw">const</span> count = <span class="fn">ref</span>(<span class="str">0</span>)
+count.value
+
+<span class="comment">// Svelte reactive declaration</span>
+<span class="hl">$:</span> doubled = count * <span class="str">2</span>
+
+<span class="comment">// React equivalent</span>
+<span class="kw">const</span> doubled = <span class="fn">useMemo</span>(() => count * <span class="str">2</span>, [count])
+
+<span class="comment">// Vue equivalent</span>
+<span class="kw">const</span> doubled = <span class="fn">computed</span>(() => count.value * <span class="str">2</span>)</pre>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-concepts" class="panel">
+    <div class="grid3" id="concepts-grid"></div>
+  </div>
+</div>
+
+<script>
+  const priorityColor = { high: '#ef4444', medium: '#f59e0b', low: '#22c55e' };
+  let tasks = [
+    { id: 1, title: 'Learn Svelte stores',   done: true,  priority: 'high' },
+    { id: 2, title: 'Build reactive UI',      done: true,  priority: 'high' },
+    { id: 3, title: 'Use Svelte transitions', done: false, priority: 'medium' },
+    { id: 4, title: 'Animate with flip()',    done: false, priority: 'medium' },
+    { id: 5, title: 'Deploy with Vite',       done: false, priority: 'low' },
+  ];
+  let nextId = 6;
+  let count = 0;
+
+  const $ = id => document.getElementById(id);
+
+  function updateStats() {
+    const done = tasks.filter(t => t.done).length;
+    const pct  = tasks.length ? Math.round(done / tasks.length * 100) : 0;
+    $('s-total').textContent  = tasks.length;
+    $('s-done').textContent   = done;
+    $('s-active').textContent = tasks.length - done;
+    $('s-pct').textContent    = pct + '%';
+    $('s-fill').style.width   = pct + '%';
+  }
+
+  function renderTasks() {
+    const filterDone = $('filter-done').checked;
+    const list = $('task-list');
+    const visible = filterDone ? tasks.filter(t => !t.done) : tasks;
+
+    if (!visible.length) {
+      list.innerHTML = '<div class="empty">No tasks here</div>';
+      return;
+    }
+
+    list.innerHTML = visible.map(t => `
+      <div class="task-item ${t.done ? 'done' : ''}">
+        <div class="dot" style="background:${priorityColor[t.priority]}"></div>
+        <span class="task-title">${t.title}</span>
+        <button class="btn-toggle" data-toggle="${t.id}">${t.done ? '↩' : '✓'}</button>
+        <button class="btn-del" data-del="${t.id}">×</button>
+      </div>
+    `).join('');
+  }
+
+  function addTask() {
+    const inp = $('new-task');
+    if (!inp.value.trim()) return;
+    tasks.push({ id: nextId++, title: inp.value.trim(), done: false, priority: 'medium' });
+    inp.value = '';
+    renderTasks();
+    updateStats();
+  }
+
+  function updateCounter() {
+    $('cval').textContent      = count;
+    $('rv-count').textContent  = count;
+    $('rv-doubled').textContent = count * 2;
+    const isEven = count % 2 === 0;
+    const el = $('rv-iseven');
+    el.textContent = isEven;
+    el.className   = 'rv-val ' + (isEven ? 'c-green' : 'c-red');
+  }
+
+  const concepts = [
+    { icon: '⚡', title: 'No virtual DOM',  body: 'Svelte compiles your components to efficient imperative JS that directly updates the DOM.' },
+    { icon: '🏪', title: 'Stores',           body: 'writable(), readable(), and derived() give you reactive shared state without a framework.' },
+    { icon: '💫', title: 'Transitions',      body: 'Built-in fade, fly, slide, scale. No library needed — just import and use.' },
+    { icon: '🎬', title: 'animate:flip()',   body: 'Svelte animates list reordering automatically — just add animate:flip to the element.' },
+    { icon: '$:', title: 'Reactive labels',  body: '$: doubled = count * 2 — re-runs whenever count changes. Like computed, but simpler.' },
+    { icon: '📦', title: 'Tiny bundle',      body: 'No runtime shipped. A Svelte app is compiled JS. This demo is under 30 kB gzipped.' },
+  ];
+
+  $('concepts-grid').innerHTML = concepts.map(c => `
+    <div class="concept">
+      <div class="cicon">${c.icon}</div>
+      <div class="ctitle">${c.title}</div>
+      <div class="cbody">${c.body}</div>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', e => {
+    const id = e.target.dataset.tab;
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    $('tab-' + id).classList.add('active');
+    e.target.classList.add('active');
+  }));
+
+  $('btn-add').addEventListener('click', addTask);
+  $('new-task').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+  $('filter-done').addEventListener('change', renderTasks);
+
+  document.addEventListener('click', e => {
+    const toggleId = e.target.dataset.toggle;
+    const delId    = e.target.dataset.del;
+    if (toggleId) {
+      const id = Number(toggleId);
+      tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+      renderTasks();
+      updateStats();
+    } else if (delId) {
+      const id = Number(delId);
+      tasks = tasks.filter(t => t.id !== id);
+      renderTasks();
+      updateStats();
+    }
+  });
+
+  $('btn-dec').addEventListener('click', () => { count--; updateCounter(); });
+  $('btn-inc').addEventListener('click', () => { count++; updateCounter(); });
+
+  renderTasks();
+  updateStats();
+</script>
+</body>
 </html>

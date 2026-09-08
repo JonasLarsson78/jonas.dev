@@ -22,7 +22,6 @@ build graphql
 build auth
 build mysql
 build docker
-build svelte
 build github-actions
 build mongodb
 build scss
