@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import LanguageToggle from '../../_shared/vue/LanguageToggle.vue'
+import { useLocale } from './composables/useLocale'
 
 const API          = '/api'
 const portfolioUrl = '/'
+const { t } = useLocale()
 
 type Tab = 'jwt' | 'oauth2'
 const activeTab = ref<Tab>('jwt')
@@ -51,7 +54,7 @@ async function login() {
       body: JSON.stringify({ email: email.value, password: password.value }),
     })
     const json = await res.json() as TokenSet & { error?: string }
-    if (!res.ok) throw new Error(json.error ?? 'Login failed')
+    if (!res.ok) throw new Error(json.error ?? t.value.jwt.loginFailed)
     tokenSet.value = json
   } catch (e) { loginError.value = (e as Error).message }
   loginLoading.value = false
@@ -112,7 +115,7 @@ async function startOAuth() {
   try {
     const res = await fetch(`${API}/auth/oauth/authorize?${params}`)
     const json = await res.json() as { code: string; redirectUrl: string; error?: string }
-    if (!res.ok || json.error) throw new Error(json.error ?? 'Authorization failed')
+    if (!res.ok || json.error) throw new Error(json.error ?? t.value.oauth.authorizationFailed)
     oauthCode.value = json.code
     oauthStep.value = 'code'
     await new Promise(r => setTimeout(r, 800))
@@ -148,54 +151,53 @@ function resetOAuth() { oauthStep.value = 'idle'; oauthCode.value = ''; oauthTok
 <template>
   <div class="app">
     <div class="topbar">
-      <a :href="portfolioUrl" class="back-link">← Portfolio</a>
+      <a :href="portfolioUrl" class="back-link">← {{ t.topbar.back }}</a>
       <div class="topbar-center">
         <span class="badge jwt">JWT</span>
         <span class="badge oauth">OAuth2</span>
         <span class="badge node">Node.js + Express</span>
       </div>
-      <div style="width:100px" />
+      <div class="topbar-right">
+        <LanguageToggle />
+      </div>
     </div>
 
     <div class="container">
       <div class="page-header">
-        <h1 class="page-title">JWT &amp; OAuth2</h1>
-        <p class="page-subtitle">
-          Live authentication flows — login, decode tokens, make protected requests,
-          and walk through the OAuth2 authorization code flow step by step.
-        </p>
+        <h1 class="page-title">{{ t.header.title }}</h1>
+        <p class="page-subtitle">{{ t.header.subtitle }}</p>
       </div>
 
       <div class="tabs">
-        <button class="tab" :class="{ active: activeTab === 'jwt' }"    @click="activeTab = 'jwt'">JWT</button>
-        <button class="tab" :class="{ active: activeTab === 'oauth2' }" @click="activeTab = 'oauth2'">OAuth2 Flow</button>
+        <button class="tab" :class="{ active: activeTab === 'jwt' }"    @click="activeTab = 'jwt'">{{ t.tabs.jwt }}</button>
+        <button class="tab" :class="{ active: activeTab === 'oauth2' }" @click="activeTab = 'oauth2'">{{ t.tabs.oauth2 }}</button>
       </div>
 
       <!-- JWT tab -->
       <div v-if="activeTab === 'jwt'" class="columns">
         <!-- Login -->
         <div class="panel">
-          <div class="panel-title">1. Login → receive tokens</div>
-          <div class="hint">Credentials: <code>jonas@demo.com</code> / <code>password123</code></div>
-          <input v-model="email"    class="field" placeholder="email" />
-          <input v-model="password" class="field" type="password" placeholder="password" />
+          <div class="panel-title">{{ t.jwt.loginTitle }}</div>
+          <div class="hint" v-html="t.jwt.credentialsHint" />
+          <input v-model="email"    class="field" :placeholder="t.jwt.emailPlaceholder" />
+          <input v-model="password" class="field" type="password" :placeholder="t.jwt.passwordPlaceholder" />
           <button class="action-btn primary" :disabled="loginLoading" @click="login">
-            {{ loginLoading ? 'Logging in…' : 'POST /auth/login' }}
+            {{ loginLoading ? t.jwt.loggingIn : t.jwt.loginBtn }}
           </button>
           <div v-if="loginError" class="err">{{ loginError }}</div>
           <div v-if="tokenSet" class="success-row">
-            <div class="success-label">✅ Logged in as <strong>{{ tokenSet.user.name }}</strong></div>
+            <div class="success-label">{{ t.jwt.loggedInAsPrefix }}<strong>{{ tokenSet.user.name }}</strong></div>
             <div class="badge-row">
               <span class="mini-badge">{{ tokenSet.user.role }}</span>
-              <span class="mini-badge">expires in {{ tokenSet.expiresIn }}s</span>
+              <span class="mini-badge">{{ t.jwt.expiresIn(tokenSet.expiresIn) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Token decoder -->
         <div class="panel">
-          <div class="panel-title">2. Decode JWT structure</div>
-          <div v-if="!decoded" class="empty-hint">Login first to see the token</div>
+          <div class="panel-title">{{ t.jwt.decodeTitle }}</div>
+          <div v-if="!decoded" class="empty-hint">{{ t.jwt.loginFirst }}</div>
           <div v-else class="token-viewer">
             <div class="token-raw">
               <span class="tok-header">{{ tokenSet!.accessToken.split('.')[0] }}</span>.<span
@@ -204,15 +206,15 @@ function resetOAuth() { oauthStep.value = 'idle'; oauthCode.value = ''; oauthTok
             </div>
             <div class="token-parts">
               <div class="token-part header-part">
-                <div class="part-label">Header</div>
+                <div class="part-label">{{ t.jwt.partHeader }}</div>
                 <pre>{{ JSON.stringify(decoded.header, null, 2) }}</pre>
               </div>
               <div class="token-part payload-part">
-                <div class="part-label">Payload</div>
+                <div class="part-label">{{ t.jwt.partPayload }}</div>
                 <pre>{{ JSON.stringify(decoded.payload, null, 2) }}</pre>
               </div>
               <div class="token-part sig-part">
-                <div class="part-label">Signature</div>
+                <div class="part-label">{{ t.jwt.partSignature }}</div>
                 <pre>HMACSHA256(base64(header) + "." + base64(payload), secret)</pre>
               </div>
             </div>
@@ -221,10 +223,10 @@ function resetOAuth() { oauthStep.value = 'idle'; oauthCode.value = ''; oauthTok
 
         <!-- Protected request -->
         <div class="panel">
-          <div class="panel-title">3. Access protected endpoint</div>
+          <div class="panel-title">{{ t.jwt.protectedTitle }}</div>
           <div class="endpoint-row"><code>GET /auth/profile</code> <span class="auth-label">Authorization: Bearer …</span></div>
           <button class="action-btn" :disabled="!tokenSet" @click="fetchProfile">
-            Fetch profile
+            {{ t.jwt.fetchProfile }}
           </button>
           <div v-if="profileError" class="err">{{ profileError }}</div>
           <div v-if="profileData" class="json-result">
@@ -234,30 +236,27 @@ function resetOAuth() { oauthStep.value = 'idle'; oauthCode.value = ''; oauthTok
 
         <!-- Refresh -->
         <div class="panel">
-          <div class="panel-title">4. Refresh access token</div>
-          <p class="hint">Access tokens expire in 15 min. Use the refresh token to get a new pair without re-login.</p>
+          <div class="panel-title">{{ t.jwt.refreshTitle }}</div>
+          <p class="hint">{{ t.jwt.refreshHint }}</p>
           <button class="action-btn" :disabled="!tokenSet" @click="refreshTokens">
-            POST /auth/refresh
+            {{ t.jwt.refreshBtn }}
           </button>
           <div v-if="tokenSet" class="success-row" style="margin-top:10px">
-            <div class="success-label">Refresh token stored server-side — single-use, expires in 7d</div>
+            <div class="success-label">{{ t.jwt.refreshNote }}</div>
           </div>
         </div>
       </div>
 
       <!-- OAuth2 tab -->
       <div v-else class="panel">
-        <div class="panel-title">OAuth2 Authorization Code Flow</div>
-        <p class="hint" style="margin-bottom:20px">
-          Click "Start" to walk through the full flow: authorization → code → token exchange.
-          The server auto-approves for demo purposes.
-        </p>
+        <div class="panel-title">{{ t.oauth.panelTitle }}</div>
+        <p class="hint" style="margin-bottom:20px">{{ t.oauth.intro }}</p>
 
         <div class="flow-steps">
           <div class="flow-step" :class="{ active: oauthStep !== 'idle', done: ['code','exchanging','done'].includes(oauthStep) }">
             <div class="step-num">1</div>
             <div class="step-body">
-              <div class="step-title">Authorization Request</div>
+              <div class="step-title">{{ t.oauth.stepTitles.s1 }}</div>
               <code class="step-code">GET /auth/oauth/authorize?client_id={{ oauthClientId }}&amp;redirect_uri={{ oauthRedirectUri }}&amp;response_type=code</code>
             </div>
           </div>
@@ -265,16 +264,16 @@ function resetOAuth() { oauthStep.value = 'idle'; oauthCode.value = ''; oauthTok
           <div class="flow-step" :class="{ active: ['code','exchanging','done'].includes(oauthStep), done: ['exchanging','done'].includes(oauthStep) }">
             <div class="step-num">2</div>
             <div class="step-body">
-              <div class="step-title">Authorization Code</div>
-              <div v-if="oauthCode" class="code-pill">code = <strong>{{ oauthCode }}</strong> (expires in 60s)</div>
-              <div v-else class="step-waiting">Waiting for server response…</div>
+              <div class="step-title">{{ t.oauth.stepTitles.s2 }}</div>
+              <div v-if="oauthCode" class="code-pill">{{ t.oauth.codePrefix }}<strong>{{ oauthCode }}</strong>{{ t.oauth.codeSuffix }}</div>
+              <div v-else class="step-waiting">{{ t.oauth.waitingResponse }}</div>
             </div>
           </div>
 
           <div class="flow-step" :class="{ active: ['exchanging','done'].includes(oauthStep), done: oauthStep === 'done' }">
             <div class="step-num">3</div>
             <div class="step-body">
-              <div class="step-title">Token Exchange</div>
+              <div class="step-title">{{ t.oauth.stepTitles.s3 }}</div>
               <code class="step-code">POST /auth/oauth/token { code, grant_type: "authorization_code", client_id }</code>
             </div>
           </div>
@@ -282,11 +281,11 @@ function resetOAuth() { oauthStep.value = 'idle'; oauthCode.value = ''; oauthTok
           <div class="flow-step" :class="{ active: oauthStep === 'done', done: oauthStep === 'done' }">
             <div class="step-num">4</div>
             <div class="step-body">
-              <div class="step-title">Access Token</div>
+              <div class="step-title">{{ t.oauth.stepTitles.s4 }}</div>
               <div v-if="oauthTokens" class="success-row">
-                <div class="success-label">✅ token_type: Bearer · expires_in: {{ oauthTokens.expiresIn }}s</div>
+                <div class="success-label">{{ t.oauth.tokenSuccess(oauthTokens.expiresIn ?? 0) }}</div>
               </div>
-              <div v-else class="step-waiting">Waiting…</div>
+              <div v-else class="step-waiting">{{ t.oauth.waiting }}</div>
             </div>
           </div>
         </div>
@@ -295,10 +294,10 @@ function resetOAuth() { oauthStep.value = 'idle'; oauthCode.value = ''; oauthTok
 
         <div class="flow-actions">
           <button v-if="oauthStep === 'idle' || oauthStep === 'done'" class="action-btn primary" @click="startOAuth">
-            {{ oauthStep === 'done' ? 'Run again' : 'Start OAuth2 flow' }}
+            {{ oauthStep === 'done' ? t.oauth.runAgainBtn : t.oauth.startBtn }}
           </button>
-          <div v-else class="running-hint">Flow in progress…</div>
-          <button v-if="oauthStep !== 'idle'" class="action-btn" @click="resetOAuth">Reset</button>
+          <div v-else class="running-hint">{{ t.oauth.inProgress }}</div>
+          <button v-if="oauthStep !== 'idle'" class="action-btn" @click="resetOAuth">{{ t.oauth.resetBtn }}</button>
         </div>
       </div>
     </div>
@@ -311,6 +310,7 @@ function resetOAuth() { oauthStep.value = 'idle'; oauthCode.value = ''; oauthTok
 .back-link { font-size: 13px; color: #64748b; text-decoration: none; font-weight: 500; transition: color .15s; }
 .back-link:hover { color: #e2e8f0; }
 .topbar-center { display: flex; gap: 6px; }
+.topbar-right { display: flex; justify-content: flex-end; min-width: 100px; }
 .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .badge.jwt   { background: rgba(234,179,8,.1);   border: 1px solid rgba(234,179,8,.25);  color: #eab308; }
 .badge.oauth { background: rgba(168,85,247,.1);  border: 1px solid rgba(168,85,247,.25); color: #a855f7; }

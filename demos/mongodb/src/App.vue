@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import LanguageToggle from '../../_shared/vue/LanguageToggle.vue'
+import { useLocale } from './composables/useLocale'
+import type { Tab } from './i18n/translations'
 
 const portfolioUrl = '/'
 const API = '/api/mongo'
-type Tab = 'schema' | 'queries' | 'aggregation'
+const { t } = useLocale()
 const activeTab = ref<Tab>('schema')
+const tabIds: Tab[] = ['schema', 'queries', 'aggregation']
 
 interface MongoTask { _id: string; title: string; status: string; priority: string; createdAt: string; author: { name: string; role: string } }
 interface StatRow { _id: string; count: number; done: number }
@@ -57,34 +61,33 @@ const statusColor: Record<string, string> = { done: '#22c55e', 'in-progress': '#
 <template>
   <div class="app">
     <div class="topbar">
-      <a :href="portfolioUrl" class="back-link">← Portfolio</a>
+      <a :href="portfolioUrl" class="back-link">← {{ t.topbar.back }}</a>
       <div class="topbar-center">
         <span class="badge mongo">MongoDB</span>
         <span class="badge doc">Documents</span>
         <span class="badge agg">Aggregation</span>
       </div>
-      <div style="width:100px" />
+      <div class="topbar-right">
+        <LanguageToggle />
+      </div>
     </div>
 
     <div class="container">
       <div class="page-header">
-        <h1 class="page-title">MongoDB Demo</h1>
-        <p class="page-subtitle">
-          NoSQL document database. No rigid schema — documents in a collection can have different shapes.
-          Powerful aggregation pipeline replaces SQL GROUP BY.
-        </p>
+        <h1 class="page-title">{{ t.header.title }}</h1>
+        <p class="page-subtitle">{{ t.header.subtitle }}</p>
       </div>
 
       <div class="tabs">
-        <button v-for="[k,l] in [['schema','Schema & Model'],['queries','find() & insertOne()'],['aggregation','Aggregation Pipeline']]"
-          :key="k" class="tab" :class="{ active: activeTab === k }" @click="activeTab = (k as Tab)">{{ l }}</button>
+        <button v-for="tab in tabIds" :key="tab"
+          class="tab" :class="{ active: activeTab === tab }" @click="activeTab = tab">{{ t.tabs[tab] }}</button>
       </div>
 
       <!-- Schema -->
       <div v-if="activeTab === 'schema'" class="panel">
         <div class="split">
           <div>
-            <div class="code-label">MongoDB document (tasks collection)</div>
+            <div class="code-label">{{ t.labels.document }}</div>
             <pre class="mongo-code">{
   _id: ObjectId("65f1a2b3c4d5e6f7a8b9c0d1"),
   title: "Design GraphQL schema",
@@ -102,7 +105,7 @@ const statusColor: Record<string, string> = { done: '#22c55e', 'in-progress': '#
 }</pre>
           </div>
           <div>
-            <div class="code-label">Mongoose schema (TypeScript)</div>
+            <div class="code-label">{{ t.labels.schema }}</div>
             <pre class="mongo-code">const taskSchema = new Schema({
   title:    { type: String, required: true },
   status:   {
@@ -122,12 +125,10 @@ const statusColor: Record<string, string> = { done: '#22c55e', 'in-progress': '#
 taskSchema.index({ status: 1 })
 taskSchema.index({ author: 1, status: 1 })</pre>
             <div class="vs-box">
-              <div class="vs-title">MongoDB vs MySQL</div>
-              <div class="vs-row"><span class="vs-mongo">Collection</span><span class="vs-sql">Table</span></div>
-              <div class="vs-row"><span class="vs-mongo">Document</span><span class="vs-sql">Row</span></div>
-              <div class="vs-row"><span class="vs-mongo">Field</span><span class="vs-sql">Column</span></div>
-              <div class="vs-row"><span class="vs-mongo">$lookup</span><span class="vs-sql">JOIN</span></div>
-              <div class="vs-row"><span class="vs-mongo">_id (ObjectId)</span><span class="vs-sql">id (INT PK)</span></div>
+              <div class="vs-title">{{ t.vs.title }}</div>
+              <div v-for="row in t.vs.rows" :key="row[0]" class="vs-row">
+                <span class="vs-mongo">{{ row[0] }}</span><span class="vs-sql">{{ row[1] }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -137,7 +138,7 @@ taskSchema.index({ author: 1, status: 1 })</pre>
       <div v-else-if="activeTab === 'queries'" class="panel">
         <div class="split">
           <div>
-            <div class="code-label">MongoDB query</div>
+            <div class="code-label">{{ t.labels.query }}</div>
             <pre class="mongo-code">// find() with filter
 await Task.find(
   {{ statusFilter ? `{ status: '${statusFilter}' }` : '{} // all documents' }}
@@ -148,29 +149,29 @@ await Task.find(
 
             <div class="filter-row">
               <select v-model="statusFilter" class="mongo-select">
-                <option value="">status: (any)</option>
+                <option value="">{{ t.hints.statusAny }}</option>
                 <option value="todo">todo</option>
                 <option value="in-progress">in-progress</option>
                 <option value="done">done</option>
               </select>
-              <button class="run-btn" :disabled="loading" @click="fetchTasks">▶ Run find()</button>
+              <button class="run-btn" :disabled="loading" @click="fetchTasks">{{ t.buttons.runFind }}</button>
             </div>
 
-            <div class="code-label" style="margin-top:20px">insertOne()</div>
-            <input v-model="newTitle" class="mongo-input" placeholder="title" />
+            <div class="code-label" style="margin-top:20px">{{ t.labels.insertOne }}</div>
+            <input v-model="newTitle" class="mongo-input" :placeholder="t.hints.titlePlaceholder" />
             <select v-model="newPriority" class="mongo-select">
               <option value="low">priority: low</option>
               <option value="medium">priority: medium</option>
               <option value="high">priority: high</option>
             </select>
-            <button class="run-btn" :disabled="loading || !newTitle.trim()" @click="insertTask" style="margin-top:8px">▶ insertOne()</button>
+            <button class="run-btn" :disabled="loading || !newTitle.trim()" @click="insertTask" style="margin-top:8px">{{ t.buttons.runInsert }}</button>
           </div>
 
           <div>
-            <div class="code-label">Result</div>
+            <div class="code-label">{{ t.labels.result }}</div>
             <div v-if="error" class="err">{{ error }}</div>
             <div v-else-if="insertResult" class="doc-list">
-              <div class="doc-inserted">✅ Document inserted</div>
+              <div class="doc-inserted">{{ t.hints.docInserted }}</div>
               <div class="doc-card">
                 <div v-for="[k,v] in Object.entries(insertResult)" :key="k" class="doc-field">
                   <span class="doc-key">{{ k }}</span>
@@ -189,7 +190,7 @@ await Task.find(
                 </div>
               </div>
             </div>
-            <div v-else class="empty">Click "Run find()" to execute</div>
+            <div v-else class="empty">{{ t.hints.clickFind }}</div>
           </div>
         </div>
       </div>
@@ -198,7 +199,7 @@ await Task.find(
       <div v-else-if="activeTab === 'aggregation'" class="panel">
         <div class="split">
           <div>
-            <div class="code-label">Aggregation Pipeline</div>
+            <div class="code-label">{{ t.labels.aggPipeline }}</div>
             <pre class="mongo-code">await Task.aggregate([
   // Stage 1: Group by status
   {
@@ -219,12 +220,12 @@ await Task.find(
     }
   }
 ])</pre>
-            <button class="run-btn" :disabled="loading" @click="fetchAgg">▶ Run aggregate()</button>
+            <button class="run-btn" :disabled="loading" @click="fetchAgg">{{ t.buttons.runAgg }}</button>
           </div>
           <div>
-            <div class="code-label">Result</div>
+            <div class="code-label">{{ t.labels.result }}</div>
             <div v-if="error" class="err">{{ error }}</div>
-            <div v-else-if="!aggResult" class="empty">Click "Run aggregate()"</div>
+            <div v-else-if="!aggResult" class="empty">{{ t.hints.clickAgg }}</div>
             <div v-else class="agg-list">
               <div v-for="row in aggResult" :key="row._id" class="agg-row">
                 <span class="pill" :style="{color: statusColor[row._id] || '#64748b'}">{{ row._id }}</span>
@@ -247,6 +248,7 @@ await Task.find(
 .back-link { font-size: 13px; color: #64748b; text-decoration: none; font-weight: 500; }
 .back-link:hover { color: #e2e8f0; }
 .topbar-center { display: flex; gap: 6px; }
+.topbar-right { display: flex; justify-content: flex-end; min-width: 100px; }
 .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .badge.mongo { background: rgba(0,163,75,.12); border: 1px solid rgba(0,163,75,.3); color: #00a34b; }
 .badge.doc   { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.2); color: #22c55e; }

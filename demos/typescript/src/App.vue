@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import LanguageToggle from '../../_shared/vue/LanguageToggle.vue'
+import { useLocale } from './composables/useLocale'
 
 const portfolioUrl = '/'
+const { t } = useLocale()
 
 // ─── Types used in this demo ────────────────────────────────────────────────
 
@@ -48,25 +51,37 @@ function isTask(value: unknown): value is Task {
 }
 
 // Record type: exhaustive mapping with no room for missing keys
-const priorityLabel: Record<Priority, string> = {
-  low:    '● Low',
-  medium: '●● Medium',
-  high:   '●●● High',
-}
+const priorityLabel = computed<Record<Priority, string>>(() => ({
+  low:    t.value.utility.priorities.low,
+  medium: t.value.utility.priorities.medium,
+  high:   t.value.utility.priorities.high,
+}))
 
 // ─── Demo state ─────────────────────────────────────────────────────────────
 
-const tasks = ref<Task[]>([
-  { id: '1', title: 'Implement generics',       priority: 'high',   status: 'done' },
-  { id: '2', title: 'Add utility types',         priority: 'high',   status: 'done' },
-  { id: '3', title: 'Discriminated unions',      priority: 'medium', status: 'in-progress' },
-  { id: '4', title: 'Write type guards',         priority: 'medium', status: 'todo' },
-  { id: '5', title: 'strict: true everywhere',  priority: 'high',   status: 'done' },
+const seedTasks = computed<Task[]>(() => [
+  { id: '1', title: t.value.seedTasks[0], priority: 'high',   status: 'done' },
+  { id: '2', title: t.value.seedTasks[1], priority: 'high',   status: 'done' },
+  { id: '3', title: t.value.seedTasks[2], priority: 'medium', status: 'in-progress' },
+  { id: '4', title: t.value.seedTasks[3], priority: 'medium', status: 'todo' },
+  { id: '5', title: t.value.seedTasks[4], priority: 'high',   status: 'done' },
 ])
+const userTasks = ref<Task[]>([])
+const tasks = computed<Task[]>(() => [...seedTasks.value, ...userTasks.value])
 
 const newTask = ref<CreateTask>({ title: '', priority: 'medium', status: 'todo' })
 
-const apiResponse = ref<ApiResponse<Task[]>>({ state: 'success', data: tasks.value, count: tasks.value.length })
+type ApiState =
+  | { state: 'loading' }
+  | { state: 'error'; message: string }
+  | { state: 'success' }
+
+const apiState = ref<ApiState>({ state: 'success' })
+const apiResponse = computed<ApiResponse<Task[]>>(() =>
+  apiState.value.state === 'success'
+    ? { state: 'success', data: tasks.value, count: tasks.value.length }
+    : apiState.value
+)
 
 const selectedId = ref<string | null>(null)
 const foundTask  = computed(() =>
@@ -74,12 +89,11 @@ const foundTask  = computed(() =>
 )
 
 // Unknown JSON blob to demonstrate type guard
-const unknownBlob = ref<unknown>({
-  id: 'x9',
-  title: 'Parsed from JSON',
-  priority: 'low',
-  status: 'todo',
-})
+const blobHasFields = ref(true)
+const unknownBlob = computed<unknown>(() => blobHasFields.value
+  ? { id: 'x9', title: t.value.typeguards.blobTitleWhenValid, priority: 'low', status: 'todo' }
+  : { id: 'x9', title: t.value.typeguards.blobTitleWhenInvalid }
+)
 const blobIsTask = computed(() => isTask(unknownBlob.value))
 
 const summaries = computed<TaskSummary[]>(() =>
@@ -88,79 +102,65 @@ const summaries = computed<TaskSummary[]>(() =>
 
 function addTask() {
   if (!newTask.value.title.trim()) return
-  tasks.value.push({ ...newTask.value, id: Math.random().toString(36).slice(2, 7) })
+  userTasks.value.push({ ...newTask.value, id: Math.random().toString(36).slice(2, 7) })
   newTask.value = { title: '', priority: 'medium', status: 'todo' }
-  apiResponse.value = { state: 'success', data: tasks.value, count: tasks.value.length }
+  apiState.value = { state: 'success' }
 }
 
 function simulateLoading() {
-  apiResponse.value = { state: 'loading' }
+  apiState.value = { state: 'loading' }
   setTimeout(() => {
-    apiResponse.value = { state: 'success', data: tasks.value, count: tasks.value.length }
+    apiState.value = { state: 'success' }
   }, 1500)
 }
 
 function simulateError() {
-  apiResponse.value = { state: 'error', message: 'Network timeout after 5000ms' }
+  apiState.value = { state: 'error', message: t.value.discriminated.errorMessage }
 }
 
 function toggleBlobValid() {
-  unknownBlob.value = blobIsTask.value
-    ? { id: 'x9', title: 'Parsed from JSON' }  // missing priority/status → fails guard
-    : { id: 'x9', title: 'Parsed from JSON', priority: 'low', status: 'todo' }
+  blobHasFields.value = !blobHasFields.value
 }
 
 // ─── Section config ─────────────────────────────────────────────────────────
-interface Section {
-  id: string
-  label: string
-  concept: string
-  tagline: string
-}
+type SectionId = 'utility' | 'generics' | 'discriminated' | 'typeguards'
+const sectionIds: SectionId[] = ['utility', 'generics', 'discriminated', 'typeguards']
 
-const sections: Section[] = [
-  { id: 'utility',       label: 'Utility Types',       concept: 'Omit · Pick · Partial · Record', tagline: 'Derive types without duplication' },
-  { id: 'generics',      label: 'Generics',             concept: 'getById<T extends { id: string }>', tagline: 'Reusable logic, fully typed' },
-  { id: 'discriminated', label: 'Discriminated Unions', concept: 'ApiResponse<T> = loading | error | success', tagline: 'Exhaustive state modelling' },
-  { id: 'typeguards',    label: 'Type Guards',          concept: 'value is Task', tagline: 'Safe runtime narrowing' },
-]
-
-const active = ref('utility')
+const active = ref<SectionId>('utility')
 </script>
 
 <template>
   <div class="app">
     <!-- Topbar -->
     <div class="topbar">
-      <a :href="portfolioUrl" class="back-link">← Portfolio</a>
+      <a :href="portfolioUrl" class="back-link">← {{ t.topbar.back }}</a>
       <div class="topbar-center">
         <span class="badge ts">TypeScript 5</span>
         <span class="badge strict">strict: true</span>
         <span class="badge vue">Vue 3</span>
       </div>
-      <div style="width:100px" />
+      <div class="topbar-right">
+        <LanguageToggle />
+      </div>
     </div>
 
     <div class="container">
       <!-- Header -->
       <div class="page-header">
-        <h1 class="page-title">TypeScript Showcase</h1>
-        <p class="page-subtitle">
-          Interactive examples of the TypeScript patterns used across this portfolio.
-          Every file is strict mode — no <code>any</code>, no escape hatches.
-        </p>
+        <h1 class="page-title">{{ t.header.title }}</h1>
+        <p class="page-subtitle" v-html="t.header.subtitleHtml" />
       </div>
 
       <!-- Section nav -->
       <div class="section-nav">
         <button
-          v-for="s in sections"
-          :key="s.id"
+          v-for="id in sectionIds"
+          :key="id"
           class="section-btn"
-          :class="{ active: active === s.id }"
-          @click="active = s.id"
+          :class="{ active: active === id }"
+          @click="active = id"
         >
-          {{ s.label }}
+          {{ t.sections[id].label }}
         </button>
       </div>
 
@@ -168,14 +168,14 @@ const active = ref('utility')
       <div v-if="active === 'utility'" class="panel">
         <div class="panel-header">
           <div>
-            <div class="panel-title">Utility Types</div>
-            <div class="panel-tagline">Build new types from existing ones — no copy-paste.</div>
+            <div class="panel-title">{{ t.sections.utility.panelTitle }}</div>
+            <div class="panel-tagline">{{ t.sections.utility.panelTagline }}</div>
           </div>
         </div>
 
         <div class="split">
           <div class="code-card">
-            <div class="code-title">Types definition</div>
+            <div class="code-title">{{ t.utility.codeTitle }}</div>
             <pre class="code"><span class="kw">interface</span> <span class="type">Task</span> {
   id:       <span class="type">string</span>
   title:    <span class="type">string</span>
@@ -201,12 +201,12 @@ const active = ref('utility')
           </div>
 
           <div class="demo-card">
-            <div class="demo-title">Live — CreateTask form</div>
+            <div class="demo-title">{{ t.utility.demoTitle }}</div>
             <div class="form-group">
               <input
                 v-model="newTask.title"
                 class="ts-input"
-                placeholder="title: string"
+                :placeholder="t.utility.titlePlaceholder"
                 @keydown.enter="addTask"
               />
             </div>
@@ -221,12 +221,12 @@ const active = ref('utility')
                 <option value="in-progress">in-progress</option>
                 <option value="done">done</option>
               </select>
-              <button class="ts-btn" @click="addTask">Add</button>
+              <button class="ts-btn" @click="addTask">{{ t.utility.addBtn }}</button>
             </div>
 
             <div class="divider" />
 
-            <div class="demo-label">TaskSummary[ ] — Pick&lt;Task, 'id' | 'title'&gt;</div>
+            <div class="demo-label">{{ t.utility.summaryLabel }}</div>
             <div class="summary-list">
               <div v-for="s in summaries" :key="s.id" class="summary-item">
                 <span class="summary-id">{{ s.id }}</span>
@@ -236,7 +236,7 @@ const active = ref('utility')
 
             <div class="divider" />
 
-            <div class="demo-label">Record&lt;Priority, string&gt;</div>
+            <div class="demo-label">{{ t.utility.recordLabel }}</div>
             <div class="record-list">
               <div v-for="(label, key) in priorityLabel" :key="key" class="record-item">
                 <code>{{ key }}</code> → <span>{{ label }}</span>
@@ -250,14 +250,14 @@ const active = ref('utility')
       <div v-else-if="active === 'generics'" class="panel">
         <div class="panel-header">
           <div>
-            <div class="panel-title">Generics</div>
-            <div class="panel-tagline">One function, any type — compiler verifies everything.</div>
+            <div class="panel-title">{{ t.sections.generics.panelTitle }}</div>
+            <div class="panel-tagline">{{ t.sections.generics.panelTagline }}</div>
           </div>
         </div>
 
         <div class="split">
           <div class="code-card">
-            <div class="code-title">Generic function with constraint</div>
+            <div class="code-title">{{ t.generics.codeTitle }}</div>
             <pre class="code"><span class="comment">// T must have an `id` field — compiler-enforced</span>
 <span class="kw">function</span> <span class="fn">getById</span>&lt;<span class="type">T</span> <span class="kw">extends</span> { id: <span class="type">string</span> }&gt;(
   items: <span class="type">T</span>[],
@@ -277,24 +277,24 @@ const active = ref('utility')
           </div>
 
           <div class="demo-card">
-            <div class="demo-title">Live — getById&lt;Task&gt;(tasks, id)</div>
+            <div class="demo-title">{{ t.generics.demoTitle }}</div>
             <div class="form-row">
               <select v-model="selectedId" class="ts-select" style="flex:1">
-                <option :value="null">— pick an id —</option>
-                <option v-for="t in tasks" :key="t.id" :value="t.id">{{ t.id }}</option>
+                <option :value="null">{{ t.generics.pickId }}</option>
+                <option v-for="task in tasks" :key="task.id" :value="task.id">{{ task.id }}</option>
               </select>
             </div>
 
             <div class="result-box" :class="{ found: foundTask, empty: !foundTask }">
               <template v-if="foundTask">
-                <div class="result-label">T = Task (inferred)</div>
+                <div class="result-label">{{ t.generics.tInferred }}</div>
                 <div class="result-field"><span>id</span><code>{{ foundTask.id }}</code></div>
                 <div class="result-field"><span>title</span><code>{{ foundTask.title }}</code></div>
                 <div class="result-field"><span>priority</span><code>{{ foundTask.priority }}</code></div>
                 <div class="result-field"><span>status</span><code>{{ foundTask.status }}</code></div>
               </template>
               <template v-else>
-                <span class="empty-hint">Select an id above → returns Task | undefined</span>
+                <span class="empty-hint">{{ t.generics.emptyHint }}</span>
               </template>
             </div>
           </div>
@@ -305,14 +305,14 @@ const active = ref('utility')
       <div v-else-if="active === 'discriminated'" class="panel">
         <div class="panel-header">
           <div>
-            <div class="panel-title">Discriminated Unions</div>
-            <div class="panel-tagline">Model every possible state — the compiler won't let you skip one.</div>
+            <div class="panel-title">{{ t.sections.discriminated.panelTitle }}</div>
+            <div class="panel-tagline">{{ t.sections.discriminated.panelTagline }}</div>
           </div>
         </div>
 
         <div class="split">
           <div class="code-card">
-            <div class="code-title">Exhaustive response type</div>
+            <div class="code-title">{{ t.discriminated.codeTitle }}</div>
             <pre class="code"><span class="kw">type</span> <span class="type">ApiResponse</span>&lt;<span class="type">T</span>&gt; =
   | { state: <span class="str">'loading'</span> }
   | { state: <span class="str">'error'</span>;   message: <span class="type">string</span> }
@@ -330,17 +330,17 @@ const active = ref('utility')
           </div>
 
           <div class="demo-card">
-            <div class="demo-title">Live — ApiResponse&lt;Task[]&gt;</div>
+            <div class="demo-title">{{ t.discriminated.demoTitle }}</div>
             <div class="union-buttons">
-              <button class="ts-btn loading" @click="simulateLoading">Simulate loading</button>
-              <button class="ts-btn error"   @click="simulateError">Simulate error</button>
+              <button class="ts-btn loading" @click="simulateLoading">{{ t.discriminated.simulateLoading }}</button>
+              <button class="ts-btn error"   @click="simulateError">{{ t.discriminated.simulateError }}</button>
             </div>
 
             <div class="union-state" :class="apiResponse.state">
               <template v-if="apiResponse.state === 'loading'">
                 <div class="state-label">state: <code>'loading'</code></div>
                 <div class="spinner-row">
-                  <span class="spinner" /><span>Fetching...</span>
+                  <span class="spinner" /><span>{{ t.discriminated.fetching }}</span>
                 </div>
               </template>
               <template v-else-if="apiResponse.state === 'error'">
@@ -368,14 +368,14 @@ const active = ref('utility')
       <div v-else-if="active === 'typeguards'" class="panel">
         <div class="panel-header">
           <div>
-            <div class="panel-title">Type Guards</div>
-            <div class="panel-tagline">Safely narrow unknown data to a known type at runtime.</div>
+            <div class="panel-title">{{ t.sections.typeguards.panelTitle }}</div>
+            <div class="panel-tagline">{{ t.sections.typeguards.panelTagline }}</div>
           </div>
         </div>
 
         <div class="split">
           <div class="code-card">
-            <div class="code-title">isTask — user-defined type guard</div>
+            <div class="code-title">{{ t.typeguards.codeTitle }}</div>
             <pre class="code"><span class="comment">// Return type `value is Task` tells TypeScript:</span>
 <span class="comment">// "if this returns true, narrow to Task"</span>
 <span class="kw">function</span> <span class="fn">isTask</span>(value: <span class="type">unknown</span>): value <span class="kw">is</span> <span class="type">Task</span> {
@@ -401,10 +401,10 @@ const active = ref('utility')
           </div>
 
           <div class="demo-card">
-            <div class="demo-title">Live — isTask(unknownBlob)</div>
+            <div class="demo-title">{{ t.typeguards.demoTitle }}</div>
 
             <div class="blob-display">
-              <div class="blob-label">unknownBlob (type: <code>unknown</code>)</div>
+              <div class="blob-label" v-html="t.typeguards.blobLabel" />
               <pre class="blob-code">{{ JSON.stringify(unknownBlob, null, 2) }}</pre>
             </div>
 
@@ -414,14 +414,12 @@ const active = ref('utility')
                 <span>isTask(unknownBlob) → <strong>{{ blobIsTask }}</strong></span>
               </div>
               <div class="guard-note">
-                {{ blobIsTask
-                  ? "TypeScript narrows to Task — all fields accessible"
-                  : "Object is missing required fields — stays unknown" }}
+                {{ blobIsTask ? t.typeguards.passNote : t.typeguards.failNote }}
               </div>
             </div>
 
             <button class="ts-btn" style="width:100%" @click="toggleBlobValid">
-              {{ blobIsTask ? 'Remove required fields →' : 'Add required fields →' }}
+              {{ blobIsTask ? t.typeguards.removeFields : t.typeguards.addFields }}
             </button>
           </div>
         </div>
@@ -429,7 +427,7 @@ const active = ref('utility')
 
       <!-- Config callout -->
       <div class="config-callout">
-        <div class="config-title">tsconfig.json — strict mode</div>
+        <div class="config-title">{{ t.config.title }}</div>
         <div class="config-grid">
           <div v-for="(val, key) in {
             'strict': true,
@@ -467,6 +465,11 @@ const active = ref('utility')
 .back-link { font-size: 13px; color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.15s; }
 .back-link:hover { color: #e2e8f0; }
 .topbar-center { display: flex; gap: 6px; }
+.topbar-right {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 100px;
+}
 .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .badge.ts     { background: rgba(49,120,198,0.12); border: 1px solid rgba(49,120,198,0.3); color: #3b82f6; }
 .badge.strict { background: rgba(99,102,241,0.1);  border: 1px solid rgba(99,102,241,0.25); color: #818cf8; }

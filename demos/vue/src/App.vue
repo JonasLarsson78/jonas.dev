@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import TaskColumn from './components/TaskColumn.vue'
+import LanguageToggle from '../../_shared/vue/LanguageToggle.vue'
 import { useTaskStore } from './stores/tasks'
-import type { Column } from './types'
+import { useLocale } from './composables/useLocale'
+import type { TaskStatus } from './types'
 
 const store        = useTaskStore()
 const portfolioUrl = '/'
+const { t } = useLocale()
 
-const columns: Column[] = [
-  { id: 'todo', label: 'To Do', color: '#64748b', accent: 'rgba(100, 116, 139, 0.15)' },
-  { id: 'in-progress', label: 'In Progress', color: '#f59e0b', accent: 'rgba(245, 158, 11, 0.12)' },
-  { id: 'done', label: 'Done', color: '#22c55e', accent: 'rgba(34, 197, 94, 0.12)' },
+interface ColumnDef { id: TaskStatus; color: string; accent: string }
+const columns: ColumnDef[] = [
+  { id: 'todo',        color: '#64748b', accent: 'rgba(100, 116, 139, 0.15)' },
+  { id: 'in-progress', color: '#f59e0b', accent: 'rgba(245, 158, 11, 0.12)' },
+  { id: 'done',        color: '#22c55e', accent: 'rgba(34, 197, 94, 0.12)' },
 ]
 
 const progress = computed(() => {
@@ -24,28 +28,28 @@ const progress = computed(() => {
   <div class="app">
     <!-- Top bar -->
     <div class="topbar">
-      <a :href="portfolioUrl" class="back-link">← Portfolio</a>
+      <a :href="portfolioUrl" class="back-link">← {{ t.topbar.back }}</a>
       <div class="topbar-center">
         <span class="tech-badge vue">Vue 3</span>
         <span class="tech-badge ts">TypeScript</span>
         <span class="tech-badge pinia">Pinia</span>
       </div>
-      <div class="topbar-right" />
+      <div class="topbar-right">
+        <LanguageToggle />
+      </div>
     </div>
 
     <div class="container">
       <!-- Header -->
       <div class="board-header">
         <div>
-          <h1 class="board-title">Task Board</h1>
-          <p class="board-subtitle">
-            Built with Vue 3 Composition API, Pinia, and TypeScript
-          </p>
+          <h1 class="board-title">{{ t.header.title }}</h1>
+          <p class="board-subtitle">{{ t.header.subtitle }}</p>
         </div>
         <div class="board-stats">
           <div class="progress-bar-wrap">
             <div class="progress-label">
-              <span>Progress</span>
+              <span>{{ t.stats.progress }}</span>
               <span class="progress-value">{{ progress }}%</span>
             </div>
             <div class="progress-track">
@@ -53,9 +57,9 @@ const progress = computed(() => {
             </div>
           </div>
           <div class="stat-pills">
-            <span class="stat-pill todo">{{ store.totalByStatus.todo }} todo</span>
-            <span class="stat-pill wip">{{ store.totalByStatus['in-progress'] }} active</span>
-            <span class="stat-pill done">{{ store.totalByStatus.done }} done</span>
+            <span class="stat-pill todo">{{ store.totalByStatus.todo }} {{ t.stats.todo }}</span>
+            <span class="stat-pill wip">{{ store.totalByStatus['in-progress'] }} {{ t.stats.active }}</span>
+            <span class="stat-pill done">{{ store.totalByStatus.done }} {{ t.stats.done }}</span>
           </div>
         </div>
       </div>
@@ -65,13 +69,13 @@ const progress = computed(() => {
         <input
           v-model="store.searchQuery"
           class="search-input"
-          placeholder="Search tasks..."
+          :placeholder="t.filters.searchPlaceholder"
         />
         <select v-model="store.filterPriority" class="filter-select">
-          <option value="all">All priorities</option>
-          <option value="high">High priority</option>
-          <option value="medium">Medium priority</option>
-          <option value="low">Low priority</option>
+          <option value="all">{{ t.filters.allPriorities }}</option>
+          <option value="high">{{ t.filters.highPriority }}</option>
+          <option value="medium">{{ t.filters.mediumPriority }}</option>
+          <option value="low">{{ t.filters.lowPriority }}</option>
         </select>
       </div>
 
@@ -81,7 +85,7 @@ const progress = computed(() => {
           v-for="col in columns"
           :key="col.id"
           :id="col.id"
-          :label="col.label"
+          :label="t.columns[col.id]"
           :color="col.color"
           :tasks="store.tasksByStatus(col.id)"
         />
@@ -89,23 +93,11 @@ const progress = computed(() => {
 
       <!-- Code callout -->
       <div class="code-callout">
-        <div class="code-callout-title">What this demo shows</div>
+        <div class="code-callout-title">{{ t.callout.title }}</div>
         <div class="code-callout-items">
-          <div class="code-item">
-            <span class="code-item-icon">🧩</span>
-            <span><strong>Composition API</strong> — <code>&lt;script setup&gt;</code>, <code>ref</code>, <code>computed</code></span>
-          </div>
-          <div class="code-item">
-            <span class="code-item-icon">🗃️</span>
-            <span><strong>Pinia</strong> — defineStore with composable-style setup</span>
-          </div>
-          <div class="code-item">
-            <span class="code-item-icon">🔷</span>
-            <span><strong>TypeScript</strong> — typed props, store, computed values</span>
-          </div>
-          <div class="code-item">
-            <span class="code-item-icon">✨</span>
-            <span><strong>Transitions</strong> — TransitionGroup for smooth card animations</span>
+          <div v-for="(item, i) in t.callout.items" :key="i" class="code-item">
+            <span class="code-item-icon">{{ item.icon }}</span>
+            <span v-html="item.html" />
           </div>
         </div>
       </div>
@@ -148,7 +140,11 @@ html, body { background: #060610; color: #e2e8f0; font-family: 'Inter', sans-ser
   gap: 8px;
 }
 
-.topbar-right { width: 80px; }
+.topbar-right {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 80px;
+}
 
 .tech-badge {
   padding: 4px 10px;

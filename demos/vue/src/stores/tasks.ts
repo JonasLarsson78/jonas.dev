@@ -1,72 +1,33 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Task, TaskStatus, TaskPriority } from '@/types'
+import { useLocale } from '../composables/useLocale'
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 9)
 }
 
 const initialTasks: Task[] = [
-  {
-    id: generateId(),
-    title: 'Set up Pinia store',
-    description: 'Configure Pinia for state management with TypeScript support',
-    priority: 'high',
-    status: 'done',
-    tags: ['pinia', 'typescript'],
-    createdAt: new Date('2024-01-01'),
-  },
-  {
-    id: generateId(),
-    title: 'Build Kanban board',
-    description: 'Create drag-and-drop task board with column filtering',
-    priority: 'high',
-    status: 'done',
-    tags: ['vue3', 'components'],
-    createdAt: new Date('2024-01-02'),
-  },
-  {
-    id: generateId(),
-    title: 'Add TypeScript types',
-    description: 'Define interfaces for Task, Column, and store state',
-    priority: 'medium',
-    status: 'in-progress',
-    tags: ['typescript'],
-    createdAt: new Date('2024-01-03'),
-  },
-  {
-    id: generateId(),
-    title: 'Integrate Node.js API',
-    description: 'Connect to the Express REST API running on port 3003',
-    priority: 'medium',
-    status: 'in-progress',
-    tags: ['api', 'node'],
-    createdAt: new Date('2024-01-04'),
-  },
-  {
-    id: generateId(),
-    title: 'Write unit tests',
-    description: 'Add Vitest tests for the Pinia store and components',
-    priority: 'low',
-    status: 'todo',
-    tags: ['vitest', 'testing'],
-    createdAt: new Date('2024-01-05'),
-  },
-  {
-    id: generateId(),
-    title: 'Deploy to Vercel',
-    description: 'Set up CI/CD pipeline and deploy Vue demo to Vercel',
-    priority: 'low',
-    status: 'todo',
-    tags: ['devops', 'vercel'],
-    createdAt: new Date('2024-01-06'),
-  },
+  { id: generateId(), seedKey: 'seed-pinia',  title: '', description: '', priority: 'high',   status: 'done',        tags: ['pinia', 'typescript'],  createdAt: new Date('2024-01-01') },
+  { id: generateId(), seedKey: 'seed-kanban', title: '', description: '', priority: 'high',   status: 'done',        tags: ['vue3', 'components'],   createdAt: new Date('2024-01-02') },
+  { id: generateId(), seedKey: 'seed-types',  title: '', description: '', priority: 'medium', status: 'in-progress', tags: ['typescript'],           createdAt: new Date('2024-01-03') },
+  { id: generateId(), seedKey: 'seed-api',    title: '', description: '', priority: 'medium', status: 'in-progress', tags: ['api', 'node'],          createdAt: new Date('2024-01-04') },
+  { id: generateId(), seedKey: 'seed-tests',  title: '', description: '', priority: 'low',    status: 'todo',        tags: ['vitest', 'testing'],    createdAt: new Date('2024-01-05') },
+  { id: generateId(), seedKey: 'seed-deploy', title: '', description: '', priority: 'low',    status: 'todo',        tags: ['devops', 'vercel'],     createdAt: new Date('2024-01-06') },
 ]
 
 export const useTaskStore = defineStore('tasks', () => {
+  const { t } = useLocale()
   const tasks = ref<Task[]>(initialTasks)
   const searchQuery = ref('')
   const filterPriority = ref<TaskPriority | 'all'>('all')
+
+  function displayTitle(task: Task): string {
+    return task.seedKey ? t.value.seedTasks[task.seedKey].title : task.title
+  }
+  function displayDesc(task: Task): string {
+    return task.seedKey ? t.value.seedTasks[task.seedKey].description : task.description
+  }
 
   const filteredTasks = computed(() => {
     let result = tasks.value
@@ -74,7 +35,7 @@ export const useTaskStore = defineStore('tasks', () => {
     if (searchQuery.value.trim()) {
       const q = searchQuery.value.toLowerCase()
       result = result.filter(
-        t => t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
+        task => displayTitle(task).toLowerCase().includes(q) || displayDesc(task).toLowerCase().includes(q)
       )
     }
 
@@ -122,5 +83,7 @@ export const useTaskStore = defineStore('tasks', () => {
     moveTask,
     deleteTask,
     totalByStatus,
+    displayTitle,
+    displayDesc,
   }
 })

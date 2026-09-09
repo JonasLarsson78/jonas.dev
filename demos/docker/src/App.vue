@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import LanguageToggle from '../../_shared/vue/LanguageToggle.vue'
+import { useLocale } from './composables/useLocale'
+import type { Tab } from './i18n/translations'
 
 const portfolioUrl = '/'
+const { t } = useLocale()
 
-type Tab = 'compose' | 'dockerfiles' | 'commands'
 const activeTab = ref<Tab>('compose')
+const tabIds: Tab[] = ['compose', 'dockerfiles', 'commands']
 
 const COMPOSE = `version: '3.9'
 
@@ -131,65 +135,32 @@ CMD ["node", "dist/index.js"]`,
   },
 }
 
-const COMMANDS = [
-  { group: 'Build & run', items: [
-    { cmd: 'docker compose up --build', desc: 'Build and start all services' },
-    { cmd: 'docker compose up -d', desc: 'Start in detached mode' },
-    { cmd: 'docker compose down', desc: 'Stop and remove containers' },
-    { cmd: 'docker compose logs -f api', desc: 'Stream logs from api service' },
-  ]},
-  { group: 'Individual services', items: [
-    { cmd: 'docker compose up showcase', desc: 'Start only the portfolio page' },
-    { cmd: 'docker compose up api graphql-api', desc: 'Start both API services' },
-    { cmd: 'docker compose restart api', desc: 'Restart a single service' },
-  ]},
-  { group: 'Inspect & debug', items: [
-    { cmd: 'docker compose ps', desc: 'List running containers and ports' },
-    { cmd: 'docker compose exec api sh', desc: 'Open shell in api container' },
-    { cmd: 'docker stats', desc: 'Real-time resource usage per container' },
-    { cmd: 'docker compose images', desc: 'List built images and sizes' },
-  ]},
-  { group: 'Cleanup', items: [
-    { cmd: 'docker compose down --volumes', desc: 'Remove containers + volumes' },
-    { cmd: 'docker system prune', desc: 'Remove all unused data' },
-    { cmd: 'docker image prune', desc: 'Remove dangling images only' },
-  ]},
-]
-
 const activeFile = ref('nuxt')
 </script>
 
 <template>
   <div class="app">
     <div class="topbar">
-      <a :href="portfolioUrl" class="back-link">← Portfolio</a>
+      <a :href="portfolioUrl" class="back-link">← {{ t.topbar.back }}</a>
       <div class="topbar-center">
         <span class="badge docker">Docker</span>
         <span class="badge compose">Compose</span>
         <span class="badge multistage">Multi-stage builds</span>
       </div>
-      <div style="width:140px" />
+      <div class="topbar-right">
+        <LanguageToggle />
+      </div>
     </div>
 
     <div class="container">
       <div class="page-header">
-        <h1 class="page-title">Docker</h1>
-        <p class="page-subtitle">
-          Production-ready Dockerfiles for every service in this portfolio,
-          orchestrated with Docker Compose. Multi-stage builds keep final images small.
-        </p>
+        <h1 class="page-title">{{ t.header.title }}</h1>
+        <p class="page-subtitle">{{ t.header.subtitle }}</p>
       </div>
 
       <!-- Architecture overview -->
       <div class="arch-row">
-        <div v-for="svc in [
-          { label: 'showcase', port: 3000, color: '#00dc82', note: 'Nuxt 3 SSR' },
-          { label: 'api', port: 3003, color: '#5cb85c', note: 'Express + SQLite' },
-          { label: 'graphql-api', port: 4001, color: '#e10098', note: 'graphql-yoga' },
-          { label: 'vue-demo', port: 3001, color: '#42b883', note: 'nginx static' },
-          { label: 'react-demo', port: 3002, color: '#61dafb', note: 'nginx static' },
-          { label: 'auth-demo', port: 3007, color: '#eab308', note: 'nginx static' },
-        ]" :key="svc.label" class="svc-card" :style="{'--c': svc.color}">
+        <div v-for="svc in t.services" :key="svc.label" class="svc-card" :style="{'--c': svc.color}">
           <div class="svc-name">{{ svc.label }}</div>
           <div class="svc-port">:{{ svc.port }}</div>
           <div class="svc-note">{{ svc.note }}</div>
@@ -197,20 +168,20 @@ const activeFile = ref('nuxt')
       </div>
 
       <div class="tabs">
-        <button v-for="t in (['compose','dockerfiles','commands'] as Tab[])" :key="t"
-          class="tab" :class="{ active: activeTab === t }" @click="activeTab = t">
-          {{ { compose: 'docker-compose.yml', dockerfiles: 'Dockerfiles', commands: 'Common commands' }[t] }}
+        <button v-for="tab in tabIds" :key="tab"
+          class="tab" :class="{ active: activeTab === tab }" @click="activeTab = tab">
+          {{ t.tabs[tab] }}
         </button>
       </div>
 
       <!-- Compose -->
       <div v-if="activeTab === 'compose'" class="panel">
-        <div class="code-label">docker-compose.yml — full stack in one command</div>
+        <div class="code-label">{{ t.compose.codeLabel }}</div>
         <pre class="docker-code">{{ COMPOSE }}</pre>
         <div class="tip-row">
-          <div class="tip">💡 <code>depends_on</code> ensures api starts before showcase</div>
-          <div class="tip">💡 <code>healthcheck</code> makes Compose wait until the service is actually ready</div>
-          <div class="tip">💡 <code>ANTHROPIC_API_KEY=\${ANTHROPIC_API_KEY}</code> — secret injected from host env, never in the image</div>
+          <div class="tip" v-html="t.compose.tip1Html" />
+          <div class="tip" v-html="t.compose.tip2Html" />
+          <div class="tip" v-html="t.compose.tip3Html" />
         </div>
       </div>
 
@@ -227,17 +198,15 @@ const activeFile = ref('nuxt')
         <div class="code-label" style="margin-top:18px">{{ DOCKERFILES[activeFile].name }}</div>
         <pre class="docker-code">{{ DOCKERFILES[activeFile].content }}</pre>
         <div class="tip-row">
-          <div class="tip">💡 <strong>Multi-stage build</strong> — <code>builder</code> stage has dev dependencies; <code>runner</code> stage only has production output. Final image is ~10× smaller.</div>
-          <div v-if="activeFile === 'vue' || activeFile === 'graphql'" class="tip">
-            💡 Vue/React builds produce static files → served by <strong>nginx:alpine</strong> (&lt;10MB image vs 300MB+ Node image)
-          </div>
+          <div class="tip" v-html="t.dockerfiles.tip1Html" />
+          <div v-if="activeFile === 'vue' || activeFile === 'graphql'" class="tip" v-html="t.dockerfiles.tip2Html" />
         </div>
       </div>
 
       <!-- Commands -->
       <div v-else-if="activeTab === 'commands'" class="panel">
         <div class="cmd-groups">
-          <div v-for="group in COMMANDS" :key="group.group" class="cmd-group">
+          <div v-for="group in t.commands" :key="group.group" class="cmd-group">
             <div class="group-label">{{ group.group }}</div>
             <div v-for="item in group.items" :key="item.cmd" class="cmd-item">
               <code class="cmd">{{ item.cmd }}</code>
@@ -256,6 +225,7 @@ const activeFile = ref('nuxt')
 .back-link { font-size: 13px; color: #64748b; text-decoration: none; font-weight: 500; transition: color .15s; }
 .back-link:hover { color: #e2e8f0; }
 .topbar-center { display: flex; gap: 6px; flex-wrap: wrap; }
+.topbar-right { display: flex; justify-content: flex-end; min-width: 100px; }
 .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .badge.docker     { background: rgba(36,150,237,.12); border: 1px solid rgba(36,150,237,.3); color: #2496ed; }
 .badge.compose    { background: rgba(36,150,237,.08); border: 1px solid rgba(36,150,237,.2); color: #60a5fa; }

@@ -20,6 +20,12 @@
     .badge-purple { background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.25); color: #818cf8; }
     .badge-green  { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25); color: #22c55e; }
 
+    .topbar-right { display: flex; justify-content: flex-end; min-width: 100px; }
+    .lang-toggle { display: inline-flex; align-items: center; padding: 2px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+    .lang-toggle button { padding: 4px 10px; border: none; background: transparent; color: rgba(255,255,255,.5); font-size: 12px; font-weight: 600; letter-spacing: .04em; cursor: pointer; border-radius: 6px; transition: background .15s, color .15s; font-family: inherit; }
+    .lang-toggle button:hover:not(.active) { color: rgba(255,255,255,.85); }
+    .lang-toggle button.active { background: rgba(99,102,241,.18); color: #fff; }
+
     .container { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
     .page-title { font-size: 30px; font-weight: 800; letter-spacing: -.03em; margin-bottom: 10px; }
     .page-subtitle { font-size: 15px; color: #64748b; line-height: 1.6; max-width: 560px; margin-bottom: 32px; }
@@ -91,48 +97,50 @@
 <body>
 
 <div class="topbar">
-  <a href="/" class="back-link">← Portfolio</a>
+  <a href="/" class="back-link" data-i18n="back">← Portfolio</a>
   <div class="center">
     <span class="badge badge-orange">Svelte 4</span>
     <span class="badge badge-purple">Stores</span>
     <span class="badge badge-green">Transitions</span>
   </div>
-  <div style="width:100px"></div>
+  <div class="topbar-right">
+    <div class="lang-toggle" role="group" aria-label="Language">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="sv">SV</button>
+    </div>
+  </div>
 </div>
 
 <div class="container">
-  <h1 class="page-title">Svelte Demo</h1>
-  <p class="page-subtitle">
-    Svelte compiles to vanilla JS — no virtual DOM, no runtime overhead.
-    Reactivity is built into the language with <code>$:</code> labels and stores.
-  </p>
+  <h1 class="page-title" data-i18n="pageTitle">Svelte Demo</h1>
+  <p class="page-subtitle" data-i18n-html="pageSubtitle"></p>
 
   <div class="tabs">
-    <button class="tab active" data-tab="tasks">Task Board</button>
-    <button class="tab" data-tab="reactive">Reactive ($:)</button>
-    <button class="tab" data-tab="concepts">Key Concepts</button>
+    <button class="tab active" data-tab="tasks" data-i18n="tabTasks">Task Board</button>
+    <button class="tab" data-tab="reactive" data-i18n="tabReactive">Reactive ($:)</button>
+    <button class="tab" data-tab="concepts" data-i18n="tabConcepts">Key Concepts</button>
   </div>
 
   <div id="tab-tasks" class="panel active">
     <div class="stats-row">
-      <div class="stat"><div class="stat-num" id="s-total">5</div><div class="stat-lbl">Total</div></div>
-      <div class="stat"><div class="stat-num green" id="s-done">2</div><div class="stat-lbl">Done</div></div>
-      <div class="stat"><div class="stat-num amber" id="s-active">3</div><div class="stat-lbl">Active</div></div>
+      <div class="stat"><div class="stat-num" id="s-total">5</div><div class="stat-lbl" data-i18n="statTotal">Total</div></div>
+      <div class="stat"><div class="stat-num green" id="s-done">2</div><div class="stat-lbl" data-i18n="statDone">Done</div></div>
+      <div class="stat"><div class="stat-num amber" id="s-active">3</div><div class="stat-lbl" data-i18n="statActive">Active</div></div>
       <div class="progress-wrap">
-        <div class="progress-label"><span>Progress</span><span class="pct" id="s-pct">40%</span></div>
+        <div class="progress-label"><span data-i18n="statProgress">Progress</span><span class="pct" id="s-pct">40%</span></div>
         <div class="track"><div class="fill" id="s-fill" style="width:40%"></div></div>
       </div>
     </div>
 
     <div class="controls">
-      <input id="new-task" class="inp" placeholder="New task..." />
-      <button class="btn-add" id="btn-add">Add</button>
-      <label class="chk-label"><input type="checkbox" id="filter-done" /> Active only</label>
+      <input id="new-task" class="inp" data-i18n-placeholder="newTaskPlaceholder" />
+      <button class="btn-add" id="btn-add" data-i18n="addBtn">Add</button>
+      <label class="chk-label"><input type="checkbox" id="filter-done" /> <span data-i18n="activeOnly">Active only</span></label>
     </div>
 
     <div class="task-list" id="task-list"></div>
 
-    <div class="code-label">The Svelte equivalent</div>
+    <div class="code-label" data-i18n="svelteEquivalent">The Svelte equivalent</div>
     <pre class="codeblock"><span class="comment">// writable store — reactive across components</span>
 <span class="kw">const</span> tasks = <span class="fn">writable</span>([...])
 
@@ -155,7 +163,7 @@
   <div id="tab-reactive" class="panel">
     <div class="split">
       <div>
-        <div class="code-label">Reactive declarations with <code style="color:#ff6b35;font-family:monospace">$:</code></div>
+        <div class="code-label" data-i18n-html="reactiveLabel"></div>
         <pre class="codeblock"><span class="kw">let</span> count = <span class="str">0</span>
 
 <span class="comment">// $: re-runs whenever count changes</span>
@@ -177,7 +185,7 @@
       </div>
 
       <div>
-        <div class="code-label">Svelte stores vs Vue / React</div>
+        <div class="code-label" data-i18n="storesVs">Svelte stores vs Vue / React</div>
         <pre class="codeblock"><span class="comment">// Svelte store</span>
 <span class="kw">const</span> count = <span class="fn">writable</span>(<span class="str">0</span>)
 <span class="hl">$count</span>   <span class="comment">// auto-subscribe in template</span>
@@ -207,18 +215,108 @@ count.value
 </div>
 
 <script>
+  const LOCALE_KEY = 'jonas.dev.locale';
+
+  const i18n = {
+    en: {
+      back: '← Portfolio',
+      pageTitle: 'Svelte Demo',
+      pageSubtitle: 'Svelte compiles to vanilla JS — no virtual DOM, no runtime overhead. Reactivity is built into the language with <code>$:</code> labels and stores.',
+      tabTasks: 'Task Board',
+      tabReactive: 'Reactive ($:)',
+      tabConcepts: 'Key Concepts',
+      statTotal: 'Total', statDone: 'Done', statActive: 'Active', statProgress: 'Progress',
+      newTaskPlaceholder: 'New task...',
+      addBtn: 'Add',
+      activeOnly: 'Active only',
+      empty: 'No tasks here',
+      svelteEquivalent: 'The Svelte equivalent',
+      reactiveLabel: 'Reactive declarations with <code style="color:#ff6b35;font-family:monospace">$:</code>',
+      storesVs: 'Svelte stores vs Vue / React',
+      seedTasks: [
+        'Learn Svelte stores',
+        'Build reactive UI',
+        'Use Svelte transitions',
+        'Animate with flip()',
+        'Deploy with Vite',
+      ],
+      concepts: [
+        { icon: '⚡', title: 'No virtual DOM',  body: 'Svelte compiles your components to efficient imperative JS that directly updates the DOM.' },
+        { icon: '🏪', title: 'Stores',           body: 'writable(), readable(), and derived() give you reactive shared state without a framework.' },
+        { icon: '💫', title: 'Transitions',      body: 'Built-in fade, fly, slide, scale. No library needed — just import and use.' },
+        { icon: '🎬', title: 'animate:flip()',   body: 'Svelte animates list reordering automatically — just add animate:flip to the element.' },
+        { icon: '$:', title: 'Reactive labels',  body: '$: doubled = count * 2 — re-runs whenever count changes. Like computed, but simpler.' },
+        { icon: '📦', title: 'Tiny bundle',      body: 'No runtime shipped. A Svelte app is compiled JS. This demo is under 30 kB gzipped.' },
+      ],
+    },
+    sv: {
+      back: '← Portfölj',
+      pageTitle: 'Svelte-demo',
+      pageSubtitle: 'Svelte kompilerar till vanilla JS — ingen virtuell DOM, ingen runtime-overhead. Reaktivitet är inbyggd i språket med <code>$:</code>-labels och stores.',
+      tabTasks: 'Uppgiftstavla',
+      tabReactive: 'Reaktivt ($:)',
+      tabConcepts: 'Nyckelbegrepp',
+      statTotal: 'Totalt', statDone: 'Klara', statActive: 'Aktiva', statProgress: 'Framsteg',
+      newTaskPlaceholder: 'Ny uppgift...',
+      addBtn: 'Lägg till',
+      activeOnly: 'Bara aktiva',
+      empty: 'Inga uppgifter här',
+      svelteEquivalent: 'Motsvarigheten i Svelte',
+      reactiveLabel: 'Reaktiva deklarationer med <code style="color:#ff6b35;font-family:monospace">$:</code>',
+      storesVs: 'Svelte stores vs Vue / React',
+      seedTasks: [
+        'Lär dig Svelte stores',
+        'Bygg reaktiv UI',
+        'Använd Svelte transitions',
+        'Animera med flip()',
+        'Deploya med Vite',
+      ],
+      concepts: [
+        { icon: '⚡', title: 'Ingen virtuell DOM', body: 'Svelte kompilerar dina komponenter till effektiv imperativ JS som uppdaterar DOM direkt.' },
+        { icon: '🏪', title: 'Stores',              body: 'writable(), readable() och derived() ger reaktivt delat state utan ramverk.' },
+        { icon: '💫', title: 'Transitions',         body: 'Inbyggda fade, fly, slide, scale. Inget bibliotek behövs — bara importera och använd.' },
+        { icon: '🎬', title: 'animate:flip()',      body: 'Svelte animerar listomordningar automatiskt — lägg bara till animate:flip på elementet.' },
+        { icon: '$:', title: 'Reaktiva labels',     body: '$: doubled = count * 2 — körs om varje gång count ändras. Som computed, fast enklare.' },
+        { icon: '📦', title: 'Litet bundle',        body: 'Ingen runtime skickas med. En Svelte-app är kompilerad JS. Detta demo är under 30 kB gzippat.' },
+      ],
+    },
+  };
+
+  let locale = (localStorage.getItem(LOCALE_KEY) === 'sv') ? 'sv' : 'en';
+  const t = () => i18n[locale];
+
   const priorityColor = { high: '#ef4444', medium: '#f59e0b', low: '#22c55e' };
   let tasks = [
-    { id: 1, title: 'Learn Svelte stores',   done: true,  priority: 'high' },
-    { id: 2, title: 'Build reactive UI',      done: true,  priority: 'high' },
-    { id: 3, title: 'Use Svelte transitions', done: false, priority: 'medium' },
-    { id: 4, title: 'Animate with flip()',    done: false, priority: 'medium' },
-    { id: 5, title: 'Deploy with Vite',       done: false, priority: 'low' },
+    { id: 1, titleIdx: 0, done: true,  priority: 'high' },
+    { id: 2, titleIdx: 1, done: true,  priority: 'high' },
+    { id: 3, titleIdx: 2, done: false, priority: 'medium' },
+    { id: 4, titleIdx: 3, done: false, priority: 'medium' },
+    { id: 5, titleIdx: 4, done: false, priority: 'low' },
   ];
   let nextId = 6;
   let count = 0;
 
   const $ = id => document.getElementById(id);
+
+  function applyStaticTexts() {
+    document.documentElement.lang = locale;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t()[key] != null) el.textContent = t()[key];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const key = el.getAttribute('data-i18n-html');
+      if (t()[key] != null) el.innerHTML = t()[key];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (t()[key] != null) el.setAttribute('placeholder', t()[key]);
+    });
+    document.querySelectorAll('.lang-toggle button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === locale);
+      btn.setAttribute('aria-pressed', btn.dataset.lang === locale);
+    });
+  }
 
   function updateStats() {
     const done = tasks.filter(t => t.done).length;
@@ -230,22 +328,27 @@ count.value
     $('s-fill').style.width   = pct + '%';
   }
 
+  function taskTitle(task) {
+    if (task.titleIdx != null) return t().seedTasks[task.titleIdx] || '';
+    return task.title || '';
+  }
+
   function renderTasks() {
     const filterDone = $('filter-done').checked;
     const list = $('task-list');
     const visible = filterDone ? tasks.filter(t => !t.done) : tasks;
 
     if (!visible.length) {
-      list.innerHTML = '<div class="empty">No tasks here</div>';
+      list.innerHTML = `<div class="empty">${t().empty}</div>`;
       return;
     }
 
-    list.innerHTML = visible.map(t => `
-      <div class="task-item ${t.done ? 'done' : ''}">
-        <div class="dot" style="background:${priorityColor[t.priority]}"></div>
-        <span class="task-title">${t.title}</span>
-        <button class="btn-toggle" data-toggle="${t.id}">${t.done ? '↩' : '✓'}</button>
-        <button class="btn-del" data-del="${t.id}">×</button>
+    list.innerHTML = visible.map(task => `
+      <div class="task-item ${task.done ? 'done' : ''}">
+        <div class="dot" style="background:${priorityColor[task.priority]}"></div>
+        <span class="task-title">${taskTitle(task)}</span>
+        <button class="btn-toggle" data-toggle="${task.id}">${task.done ? '↩' : '✓'}</button>
+        <button class="btn-del" data-del="${task.id}">×</button>
       </div>
     `).join('');
   }
@@ -269,22 +372,36 @@ count.value
     el.className   = 'rv-val ' + (isEven ? 'c-green' : 'c-red');
   }
 
-  const concepts = [
-    { icon: '⚡', title: 'No virtual DOM',  body: 'Svelte compiles your components to efficient imperative JS that directly updates the DOM.' },
-    { icon: '🏪', title: 'Stores',           body: 'writable(), readable(), and derived() give you reactive shared state without a framework.' },
-    { icon: '💫', title: 'Transitions',      body: 'Built-in fade, fly, slide, scale. No library needed — just import and use.' },
-    { icon: '🎬', title: 'animate:flip()',   body: 'Svelte animates list reordering automatically — just add animate:flip to the element.' },
-    { icon: '$:', title: 'Reactive labels',  body: '$: doubled = count * 2 — re-runs whenever count changes. Like computed, but simpler.' },
-    { icon: '📦', title: 'Tiny bundle',      body: 'No runtime shipped. A Svelte app is compiled JS. This demo is under 30 kB gzipped.' },
-  ];
+  function renderConcepts() {
+    $('concepts-grid').innerHTML = t().concepts.map(c => `
+      <div class="concept">
+        <div class="cicon">${c.icon}</div>
+        <div class="ctitle">${c.title}</div>
+        <div class="cbody">${c.body}</div>
+      </div>
+    `).join('');
+  }
 
-  $('concepts-grid').innerHTML = concepts.map(c => `
-    <div class="concept">
-      <div class="cicon">${c.icon}</div>
-      <div class="ctitle">${c.title}</div>
-      <div class="cbody">${c.body}</div>
-    </div>
-  `).join('');
+  function setLocale(next) {
+    if (next !== 'en' && next !== 'sv') return;
+    if (next === locale) return;
+    locale = next;
+    localStorage.setItem(LOCALE_KEY, locale);
+    document.cookie = LOCALE_KEY + '=' + locale + '; path=/; max-age=31536000; SameSite=Lax';
+    applyStaticTexts();
+    renderTasks();
+    renderConcepts();
+  }
+
+  document.querySelectorAll('.lang-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => setLocale(btn.dataset.lang));
+  });
+
+  window.addEventListener('storage', e => {
+    if (e.key === LOCALE_KEY && (e.newValue === 'en' || e.newValue === 'sv')) {
+      setLocale(e.newValue);
+    }
+  });
 
   document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', e => {
     const id = e.target.dataset.tab;
@@ -317,7 +434,9 @@ count.value
   $('btn-dec').addEventListener('click', () => { count--; updateCounter(); });
   $('btn-inc').addEventListener('click', () => { count++; updateCounter(); });
 
+  applyStaticTexts();
   renderTasks();
+  renderConcepts();
   updateStats();
 </script>
 </body>

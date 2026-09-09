@@ -215,6 +215,40 @@
 }
 .code-item strong { color: #94a3b8; }
 
+.topbar-right {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 100px;
+}
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.lang-toggle button {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+.lang-toggle button:hover:not(.active) {
+  color: rgba(255, 255, 255, 0.85);
+}
+.lang-toggle button.active {
+  background: rgba(99, 102, 241, 0.18);
+  color: #fff;
+}
+
 @media (max-width: 640px) {
   .charts-grid { grid-template-columns: 1fr; }
   .range-tabs { flex-wrap: wrap; }

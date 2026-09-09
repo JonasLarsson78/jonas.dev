@@ -1,14 +1,16 @@
 import { useMemo } from 'react'
 import type { DataPoint } from '../types'
+import { useLocale } from '../hooks/useLocale'
 
 interface Props {
   data: DataPoint[]
-  dataKey: keyof Omit<DataPoint, 'month'>
+  dataKey: Exclude<keyof DataPoint, 'monthKey'>
   color: string
   label: string
 }
 
 export function BarChart({ data, dataKey, color, label }: Props) {
+  const { t } = useLocale()
   const max = useMemo(
     () => Math.max(...data.map(d => d[dataKey] as number), 1),
     [data, dataKey]
@@ -35,7 +37,7 @@ export function BarChart({ data, dataKey, color, label }: Props) {
                   }}
                 />
               </div>
-              <div className="bar-month">{point.month}</div>
+              <div className="bar-month">{t.months[point.monthKey]}</div>
             </div>
           )
         })}

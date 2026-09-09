@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import LanguageToggle from '../../_shared/vue/LanguageToggle.vue'
+import { useLocale } from './composables/useLocale'
+import type { Tab } from './i18n/translations'
 
 const portfolioUrl = '/'
-type Tab = 'workflow' | 'steps' | 'patterns'
+const { t } = useLocale()
 const activeTab = ref<Tab>('workflow')
+const tabIds: Tab[] = ['workflow', 'steps', 'patterns']
 
 const WORKFLOW = `name: CI/CD Pipeline
 
@@ -49,83 +53,41 @@ jobs:
           vercel-project-id: \${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'`
 
-const steps = [
-  {
-    name: 'Trigger',
-    icon: '⚡',
-    color: '#818cf8',
-    items: [
-      { label: 'push to main', desc: 'Every commit to main triggers the full pipeline' },
-      { label: 'pull_request', desc: 'PRs run tests before merge is allowed' },
-    ],
-  },
-  {
-    name: 'Test job',
-    icon: '🧪',
-    color: '#22c55e',
-    items: [
-      { label: 'actions/checkout@v4', desc: 'Clone the repository into the runner' },
-      { label: 'setup-node@v4 + cache', desc: 'Node 22 with npm cache — faster reinstalls' },
-      { label: 'npm ci', desc: 'Clean install from package-lock.json (reproducible)' },
-      { label: 'type-check', desc: 'Run vue-tsc / tsc across all workspaces' },
-      { label: 'build-demos.sh', desc: 'Build all 9 Vite demos into showcase/public/' },
-    ],
-  },
-  {
-    name: 'Deploy job',
-    icon: '🚀',
-    color: '#f59e0b',
-    items: [
-      { label: 'needs: test', desc: 'Deploy only runs if test job succeeds' },
-      { label: 'if: main branch', desc: 'PRs run tests but never deploy to production' },
-      { label: 'vercel-action', desc: 'Triggers a Vercel production deployment via API' },
-      { label: 'secrets.*', desc: 'Credentials stored in GitHub Secrets — never in code' },
-    ],
-  },
-]
-
-const patterns = [
-  { title: 'Matrix builds', code: `strategy:\n  matrix:\n    node: [20, 22]\n    os: [ubuntu-latest, windows-latest]`, desc: 'Run tests across multiple Node versions and OS combinations in parallel.' },
-  { title: 'Caching', code: `- uses: actions/cache@v4\n  with:\n    path: ~/.npm\n    key: \${{ runner.os }}-node-\${{ hashFiles('package-lock.json') }}`, desc: 'Cache dependencies between runs — saves 30-60s on most projects.' },
-  { title: 'Environment secrets', code: `env:\n  ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}\n  DATABASE_URL: \${{ secrets.DATABASE_URL }}`, desc: 'Secrets are injected at runtime, never stored in the repo.' },
-  { title: 'Conditional steps', code: `- name: Deploy\n  if: github.ref == 'refs/heads/main'\n    && github.event_name == 'push'`, desc: 'Gate destructive steps behind branch and event conditions.' },
-]
 </script>
 
 <template>
   <div class="app">
     <div class="topbar">
-      <a :href="portfolioUrl" class="back-link">← Portfolio</a>
+      <a :href="portfolioUrl" class="back-link">← {{ t.topbar.back }}</a>
       <div class="topbar-center">
         <span class="badge gh">GitHub Actions</span>
         <span class="badge ci">CI/CD</span>
         <span class="badge yaml">YAML</span>
       </div>
-      <div style="width:100px" />
+      <div class="topbar-right">
+        <LanguageToggle />
+      </div>
     </div>
 
     <div class="container">
       <div class="page-header">
-        <h1 class="page-title">GitHub Actions</h1>
-        <p class="page-subtitle">
-          The CI/CD pipeline that builds and deploys this portfolio.
-          Every push to main runs type checks, builds all demos, then deploys to Vercel.
-        </p>
+        <h1 class="page-title">{{ t.header.title }}</h1>
+        <p class="page-subtitle">{{ t.header.subtitle }}</p>
       </div>
 
       <div class="tabs">
-        <button v-for="[k,l] in [['workflow','Workflow YAML'],['steps','Pipeline steps'],['patterns','Common patterns']]" :key="k"
-          class="tab" :class="{ active: activeTab === k }" @click="activeTab = (k as Tab)">{{ l }}</button>
+        <button v-for="tab in tabIds" :key="tab"
+          class="tab" :class="{ active: activeTab === tab }" @click="activeTab = tab">{{ t.tabs[tab] }}</button>
       </div>
 
       <div v-if="activeTab === 'workflow'" class="panel">
-        <div class="code-label">.github/workflows/ci.yml</div>
+        <div class="code-label">{{ t.workflow.codeLabel }}</div>
         <pre class="yaml-code">{{ WORKFLOW }}</pre>
       </div>
 
       <div v-else-if="activeTab === 'steps'" class="panel">
         <div class="pipeline">
-          <div v-for="(job, ji) in steps" :key="ji" class="job-block" :style="{'--c': job.color}">
+          <div v-for="(job, ji) in t.jobs" :key="ji" class="job-block" :style="{'--c': job.color}">
             <div class="job-header">
               <span class="job-icon">{{ job.icon }}</span>
               <span class="job-name">{{ job.name }}</span>
@@ -136,14 +98,14 @@ const patterns = [
                 <span class="step-desc">{{ step.desc }}</span>
               </div>
             </div>
-            <div v-if="ji < steps.length - 1" class="arrow-down">↓ on success</div>
+            <div v-if="ji < t.jobs.length - 1" class="arrow-down">{{ t.arrows.onSuccess }}</div>
           </div>
         </div>
       </div>
 
       <div v-else-if="activeTab === 'patterns'" class="panel">
         <div class="patterns-grid">
-          <div v-for="p in patterns" :key="p.title" class="pattern-card">
+          <div v-for="p in t.patterns" :key="p.title" class="pattern-card">
             <div class="pattern-title">{{ p.title }}</div>
             <pre class="yaml-code small">{{ p.code }}</pre>
             <div class="pattern-desc">{{ p.desc }}</div>
@@ -160,6 +122,7 @@ const patterns = [
 .back-link { font-size: 13px; color: #64748b; text-decoration: none; font-weight: 500; }
 .back-link:hover { color: #e2e8f0; }
 .topbar-center { display: flex; gap: 6px; }
+.topbar-right { display: flex; justify-content: flex-end; min-width: 100px; }
 .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .badge.gh   { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); color: #e2e8f0; }
 .badge.ci   { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25); color: #22c55e; }

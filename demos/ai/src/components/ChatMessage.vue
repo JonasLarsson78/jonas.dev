@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import type { Message } from '@/types'
+import { useLocale } from '../composables/useLocale'
 
 defineProps<{ message: Message }>()
+
+const { t } = useLocale()
 
 function formatContent(text: string): string {
   return text
@@ -19,7 +22,7 @@ function formatContent(text: string): string {
       <span v-else class="ai-icon">✦</span>
     </div>
     <div class="message-body">
-      <div class="message-role">{{ message.role === 'user' ? 'You' : 'Claude' }}</div>
+      <div class="message-role">{{ message.role === 'user' ? t.chat.userRole : t.chat.assistantRole }}</div>
       <div
         class="message-content"
         v-html="formatContent(message.content)"

@@ -18,10 +18,6 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Jonas Larsson — Developer Portfolio',
-      meta: [
-        { name: 'description', content: 'Interactive developer portfolio — see the code, not just the CV' }
-      ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },

@@ -1,18 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import LanguageToggle from '../../_shared/vue/LanguageToggle.vue'
+import { useLocale } from './composables/useLocale'
+import type { Tab } from './i18n/translations'
 
 const portfolioUrl = '/'
-type Tab = 'variables' | 'nesting' | 'mixins' | 'layout'
+const { t } = useLocale()
 const activeTab = ref<Tab>('variables')
-
-const colors = [
-  { name: '$color-primary', value: '#6366f1', desc: 'Indigo — CTAs, links' },
-  { name: '$color-success', value: '#22c55e', desc: 'Green — positive states' },
-  { name: '$color-warning', value: '#f59e0b', desc: 'Amber — alerts, badges' },
-  { name: '$color-danger',  value: '#ef4444', desc: 'Red — errors, destructive' },
-  { name: '$color-bg',      value: '#060610', desc: 'Page background' },
-  { name: '$color-surface', value: '#0d0d1a', desc: 'Card background' },
-]
+const tabIds: Tab[] = ['variables', 'nesting', 'mixins', 'layout']
 
 const gaps = ['4px', '8px', '12px', '16px', '24px', '32px', '48px']
 
@@ -28,34 +23,33 @@ const gridCols = ref(3)
 <template>
   <div class="app">
     <div class="topbar">
-      <a :href="portfolioUrl" class="back-link">← Portfolio</a>
+      <a :href="portfolioUrl" class="back-link">← {{ t.topbar.back }}</a>
       <div class="topbar-center">
         <span class="badge scss">SCSS</span>
         <span class="badge flexbox">Flexbox</span>
         <span class="badge grid">CSS Grid</span>
       </div>
-      <div style="width:100px" />
+      <div class="topbar-right">
+        <LanguageToggle />
+      </div>
     </div>
 
     <div class="container">
       <div class="page-header">
-        <h1 class="page-title">SCSS Showcase</h1>
-        <p class="page-subtitle">
-          Variables, nesting, mixins, and interactive Flexbox/Grid builders.
-          All styles in this portfolio are written with SCSS principles.
-        </p>
+        <h1 class="page-title">{{ t.header.title }}</h1>
+        <p class="page-subtitle">{{ t.header.subtitle }}</p>
       </div>
 
       <div class="tabs">
-        <button v-for="[k,l] in [['variables','Variables'],['nesting','Nesting'],['mixins','Mixins & Functions'],['layout','Flexbox & Grid']]"
-          :key="k" class="tab" :class="{ active: activeTab === k }" @click="activeTab = (k as Tab)">{{ l }}</button>
+        <button v-for="tab in tabIds" :key="tab"
+          class="tab" :class="{ active: activeTab === tab }" @click="activeTab = tab">{{ t.tabs[tab] }}</button>
       </div>
 
       <!-- Variables -->
       <div v-if="activeTab === 'variables'" class="panel">
         <div class="split">
           <div>
-            <div class="code-label">_variables.scss</div>
+            <div class="code-label">{{ t.labels.variablesFile }}</div>
             <pre class="scss-code">// Colors
 $color-primary: #6366f1;
 $color-success: #22c55e;
@@ -80,16 +74,16 @@ $radius-md: 10px;
 $radius-lg: 14px;</pre>
           </div>
           <div>
-            <div class="code-label">Color palette — live</div>
+            <div class="code-label">{{ t.labels.palette }}</div>
             <div class="color-grid">
-              <div v-for="c in colors" :key="c.name" class="color-swatch">
+              <div v-for="c in t.colors" :key="c.name" class="color-swatch">
                 <div class="swatch-block" :style="{ background: c.value }" />
                 <div class="swatch-name">{{ c.name }}</div>
                 <div class="swatch-val">{{ c.value }}</div>
                 <div class="swatch-desc">{{ c.desc }}</div>
               </div>
             </div>
-            <div class="code-label" style="margin-top:20px">Spacing scale</div>
+            <div class="code-label" style="margin-top:20px">{{ t.labels.spacingScale }}</div>
             <div class="spacing-row">
               <div v-for="g in gaps" :key="g" class="spacing-item">
                 <div class="spacing-block" :style="{ width: g, height: g, minWidth: g }" />
@@ -104,7 +98,7 @@ $radius-lg: 14px;</pre>
       <div v-else-if="activeTab === 'nesting'" class="panel">
         <div class="split">
           <div>
-            <div class="code-label">SCSS nesting</div>
+            <div class="code-label">{{ t.labels.scssNesting }}</div>
             <pre class="scss-code">.card {
   background: $color-surface;
   border-radius: $radius-md;
@@ -133,18 +127,18 @@ $radius-lg: 14px;</pre>
 }</pre>
           </div>
           <div>
-            <div class="code-label">Compiled output — live examples</div>
+            <div class="code-label">{{ t.labels.compiledOutput }}</div>
             <div class="card-demo">
               <div class="demo-card">
-                <div class="demo-card__title">Regular card</div>
-                <div class="demo-card__body">Hover to see :hover state</div>
+                <div class="demo-card__title">{{ t.demoCards.regularTitle }}</div>
+                <div class="demo-card__body">{{ t.demoCards.regularBody }}</div>
               </div>
               <div class="demo-card demo-card--featured">
-                <div class="demo-card__title">Featured card</div>
-                <div class="demo-card__body">Modified with BEM modifier class</div>
+                <div class="demo-card__title">{{ t.demoCards.featuredTitle }}</div>
+                <div class="demo-card__body">{{ t.demoCards.featuredBody }}</div>
               </div>
             </div>
-            <div class="code-label" style="margin-top:20px">BEM naming with SCSS</div>
+            <div class="code-label" style="margin-top:20px">{{ t.labels.bemNaming }}</div>
             <pre class="scss-code small">.block { }
 .block__element { }
 .block--modifier { }
@@ -157,7 +151,7 @@ $radius-lg: 14px;</pre>
       <div v-else-if="activeTab === 'mixins'" class="panel">
         <div class="split">
           <div>
-            <div class="code-label">Mixins & functions</div>
+            <div class="code-label">{{ t.labels.mixinsFunctions }}</div>
             <pre class="scss-code">// Mixin: responsive breakpoint
 @mixin breakpoint($bp) {
   @if $bp == 'sm' {
@@ -191,14 +185,14 @@ $sizes: 1, 2, 3, 4, 6, 8;
 }</pre>
           </div>
           <div>
-            <div class="code-label">Generated utility classes (from @each)</div>
+            <div class="code-label">{{ t.labels.generatedUtilities }}</div>
             <div class="util-demo">
               <div v-for="s in [1,2,3,4,6,8]" :key="s"
                 class="util-box" :style="{ padding: (s*4)+'px', margin: '4px' }">
                 .p-{{ s }}
               </div>
             </div>
-            <div class="code-label" style="margin-top:20px">brand-alpha() function</div>
+            <div class="code-label" style="margin-top:20px">{{ t.labels.brandAlpha }}</div>
             <div class="alpha-demo">
               <div v-for="a in [1, .7, .4, .2, .08]" :key="a"
                 class="alpha-swatch" :style="{ background: `rgba(99,102,241,${a})` }">
@@ -214,7 +208,7 @@ $sizes: 1, 2, 3, 4, 6, 8;
         <div class="layout-builder">
           <!-- Flexbox controls -->
           <div class="builder-section">
-            <div class="code-label">Flexbox playground</div>
+            <div class="code-label">{{ t.labels.flexboxPlayground }}</div>
             <div class="controls-row">
               <label class="ctrl-label">flex-direction
                 <select v-model="flexDir" class="ctrl-select">
@@ -262,8 +256,8 @@ flex-wrap: {{ flexWrap ? 'wrap' : 'nowrap' }};</pre>
 
           <!-- Grid controls -->
           <div class="builder-section">
-            <div class="code-label">CSS Grid playground</div>
-            <label class="ctrl-label">columns: {{ gridCols }}
+            <div class="code-label">{{ t.labels.gridPlayground }}</div>
+            <label class="ctrl-label">{{ t.labels.columns(gridCols) }}
               <input type="range" v-model.number="gridCols" min="1" max="6" class="ctrl-range" />
             </label>
             <div class="grid-preview" :style="{ gridTemplateColumns: `repeat(${gridCols}, 1fr)` }">
@@ -285,6 +279,7 @@ gap: 12px;</pre>
 .back-link { font-size: 13px; color: #64748b; text-decoration: none; font-weight: 500; }
 .back-link:hover { color: #e2e8f0; }
 .topbar-center { display: flex; gap: 6px; }
+.topbar-right { display: flex; justify-content: flex-end; min-width: 100px; }
 .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .badge.scss    { background: rgba(204,102,153,.12); border: 1px solid rgba(204,102,153,.3); color: #cc6699; }
 .badge.flexbox { background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.25); color: #818cf8; }

@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import LanguageToggle from '../../_shared/vue/LanguageToggle.vue'
+import { useLocale } from './composables/useLocale'
+import type { Tab } from './i18n/translations'
 
 const API          = '/api/db'
 const portfolioUrl = '/'
+const { t } = useLocale()
 
-type Tab = 'schema' | 'tasks' | 'insert' | 'stats'
 const activeTab = ref<Tab>('schema')
+const tabIds: Tab[] = ['schema', 'tasks', 'insert', 'stats']
 
 interface DbTask { id: number; title: string; status: string; priority: string; created_at: string; author_name: string; author_role: string }
 interface DbUser { id: number; name: string; email: string; role: string; created_at: string }
@@ -89,28 +93,27 @@ const priorityColor: Record<string, string> = { high: '#ef4444', medium: '#f59e0
 <template>
   <div class="app">
     <div class="topbar">
-      <a :href="portfolioUrl" class="back-link">← Portfolio</a>
+      <a :href="portfolioUrl" class="back-link">← {{ t.topbar.back }}</a>
       <div class="topbar-center">
         <span class="badge mysql">MySQL</span>
         <span class="badge sqlite">SQLite (in-memory)</span>
         <span class="badge node">Node.js + better-sqlite3</span>
       </div>
-      <div style="width:120px" />
+      <div class="topbar-right">
+        <LanguageToggle />
+      </div>
     </div>
 
     <div class="container">
       <div class="page-header">
-        <h1 class="page-title">MySQL Demo</h1>
-        <p class="page-subtitle">
-          Real SQL running in-memory via SQLite — same syntax as MySQL.
-          Schema with foreign keys, indexes, JOINs, GROUP BY, and aggregates.
-        </p>
+        <h1 class="page-title">{{ t.header.title }}</h1>
+        <p class="page-subtitle">{{ t.header.subtitle }}</p>
       </div>
 
       <div class="tabs">
-        <button v-for="t in (['schema','tasks','insert','stats'] as Tab[])" :key="t"
-          class="tab" :class="{ active: activeTab === t }" @click="activeTab = t">
-          {{ { schema: 'Schema', tasks: 'SELECT + JOIN', insert: 'INSERT', stats: 'GROUP BY / aggregate' }[t] }}
+        <button v-for="tab in tabIds" :key="tab"
+          class="tab" :class="{ active: activeTab === tab }" @click="activeTab = tab">
+          {{ t.tabs[tab] }}
         </button>
       </div>
 
@@ -118,11 +121,11 @@ const priorityColor: Record<string, string> = { high: '#ef4444', medium: '#f59e0
       <div v-if="activeTab === 'schema'" class="panel">
         <div class="split">
           <div>
-            <div class="code-label">DDL (MySQL syntax)</div>
+            <div class="code-label">{{ t.labels.ddl }}</div>
             <pre class="sql-code">{{ SCHEMA_SQL }}</pre>
           </div>
           <div>
-            <div class="code-label">Tables</div>
+            <div class="code-label">{{ t.labels.tables }}</div>
             <div class="table-card">
               <div class="table-name">users</div>
               <div v-for="col in [['id','INT','PK AUTO_INCREMENT'],['name','VARCHAR(100)','NOT NULL'],['email','VARCHAR(150)','UNIQUE'],['role','ENUM','admin|user'],['created_at','DATETIME','DEFAULT NOW()']]" :key="col[0]" class="col-row">
@@ -147,7 +150,7 @@ const priorityColor: Record<string, string> = { high: '#ef4444', medium: '#f59e0
       <div v-else-if="activeTab === 'tasks'" class="panel">
         <div class="split">
           <div>
-            <div class="code-label">SQL (generated from filters)</div>
+            <div class="code-label">{{ t.labels.sqlGenerated }}</div>
             <pre class="sql-code" v-if="tasksData">{{ tasksData.sql }}</pre>
             <pre class="sql-code" v-else>SELECT t.*, u.name AS author_name, u.role AS author_role
 FROM tasks t
@@ -156,26 +159,26 @@ INNER JOIN users u ON u.id = t.user_id
 ORDER BY t.id LIMIT 10 OFFSET 0</pre>
             <div class="filter-row">
               <select v-model="statusFilter" class="sql-select">
-                <option value="">status: all</option>
+                <option value="">{{ t.hints.statusAll }}</option>
                 <option value="todo">todo</option>
                 <option value="in_progress">in_progress</option>
                 <option value="done">done</option>
               </select>
               <select v-model="priorityFilter" class="sql-select">
-                <option value="">priority: all</option>
+                <option value="">{{ t.hints.priorityAll }}</option>
                 <option value="low">low</option>
                 <option value="medium">medium</option>
                 <option value="high">high</option>
               </select>
             </div>
             <button class="run-btn" :disabled="loading" @click="fetchTasks">
-              {{ loading ? 'Running…' : '▶  Execute query' }}
+              {{ loading ? t.buttons.running : t.buttons.execQuery }}
             </button>
           </div>
           <div>
-            <div class="code-label">Result <span v-if="tasksData">({{ tasksData.count }} rows)</span></div>
+            <div class="code-label">{{ t.labels.result }} <span v-if="tasksData">{{ t.labels.rows(tasksData.count) }}</span></div>
             <div v-if="error" class="err">{{ error }}</div>
-            <div v-else-if="!tasksData" class="empty-hint">Click "Execute query"</div>
+            <div v-else-if="!tasksData" class="empty-hint">{{ t.hints.clickExecute }}</div>
             <div v-else class="rows">
               <div v-for="row in tasksData.data" :key="row.id" class="db-row">
                 <div class="row-top">
@@ -197,7 +200,7 @@ ORDER BY t.id LIMIT 10 OFFSET 0</pre>
       <div v-else-if="activeTab === 'insert'" class="panel">
         <div class="split">
           <div>
-            <div class="code-label">SQL</div>
+            <div class="code-label">{{ t.labels.sql }}</div>
             <pre class="sql-code">INSERT INTO tasks
   (title, description, status, priority, user_id)
 VALUES
@@ -208,28 +211,26 @@ SELECT t.*, u.name AS author_name
 FROM tasks t
 INNER JOIN users u ON u.id = t.user_id
 WHERE t.id = LAST_INSERT_ID()</pre>
-            <div class="code-label" style="margin-top:16px">Values</div>
-            <input v-model="newTitle" class="sql-input" placeholder="title" />
+            <div class="code-label" style="margin-top:16px">{{ t.labels.values }}</div>
+            <input v-model="newTitle" class="sql-input" :placeholder="t.hints.titlePlaceholder" />
             <select v-model="newPriority" class="sql-select">
               <option value="low">priority: low</option>
               <option value="medium">priority: medium</option>
               <option value="high">priority: high</option>
             </select>
             <select v-model="newUserId" class="sql-select">
-              <option value="1">user_id: 1 (Jonas)</option>
-              <option value="2">user_id: 2 (Anna)</option>
-              <option value="3">user_id: 3 (Erik)</option>
+              <option v-for="u in t.users" :key="u.id" :value="u.id">{{ u.label }}</option>
             </select>
             <button class="run-btn" :disabled="loading || !newTitle.trim()" @click="insertTask">
-              {{ loading ? 'Running…' : '▶  Execute INSERT' }}
+              {{ loading ? t.buttons.running : t.buttons.execInsert }}
             </button>
           </div>
           <div>
-            <div class="code-label">Result</div>
+            <div class="code-label">{{ t.labels.result }}</div>
             <div v-if="error" class="err">{{ error }}</div>
-            <div v-else-if="!insertResult" class="empty-hint">Click "Execute INSERT"</div>
+            <div v-else-if="!insertResult" class="empty-hint">{{ t.hints.clickInsert }}</div>
             <div v-else class="db-row created">
-              <div class="created-ok">✅ Row inserted</div>
+              <div class="created-ok">{{ t.hints.rowInserted }}</div>
               <div v-for="[k,v] in Object.entries(insertResult.data)" :key="k" class="kv-row">
                 <span class="kv-key">{{ k }}</span><span class="kv-val">{{ v }}</span>
               </div>
@@ -242,7 +243,7 @@ WHERE t.id = LAST_INSERT_ID()</pre>
       <div v-else-if="activeTab === 'stats'" class="panel">
         <div class="split">
           <div>
-            <div class="code-label">SQL — GROUP BY + aggregate functions</div>
+            <div class="code-label">{{ t.labels.sqlGroupBy }}</div>
             <pre class="sql-code">SELECT
   u.name,
   COUNT(t.id)                                     AS total_tasks,
@@ -257,16 +258,16 @@ LEFT JOIN tasks t ON t.user_id = u.id
 GROUP BY u.id, u.name
 ORDER BY total_tasks DESC</pre>
             <button class="run-btn" :disabled="loading" @click="fetchStats">
-              {{ loading ? 'Running…' : '▶  Execute query' }}
+              {{ loading ? t.buttons.running : t.buttons.execQuery }}
             </button>
           </div>
           <div>
-            <div class="code-label">Result</div>
+            <div class="code-label">{{ t.labels.result }}</div>
             <div v-if="error" class="err">{{ error }}</div>
-            <div v-else-if="!statsData" class="empty-hint">Click "Execute query"</div>
+            <div v-else-if="!statsData" class="empty-hint">{{ t.hints.clickExecute }}</div>
             <div v-else class="stats-table">
               <div class="stats-header">
-                <span>Name</span><span>Total</span><span>Done</span><span>Active</span><span>Todo</span>
+                <span>{{ t.statsHeader.name }}</span><span>{{ t.statsHeader.total }}</span><span>{{ t.statsHeader.done }}</span><span>{{ t.statsHeader.active }}</span><span>{{ t.statsHeader.todo }}</span>
               </div>
               <div v-for="row in statsData" :key="row.name" class="stats-row">
                 <span>{{ row.name }}</span>
@@ -289,6 +290,7 @@ ORDER BY total_tasks DESC</pre>
 .back-link { font-size: 13px; color: #64748b; text-decoration: none; font-weight: 500; transition: color .15s; }
 .back-link:hover { color: #e2e8f0; }
 .topbar-center { display: flex; gap: 6px; flex-wrap: wrap; }
+.topbar-right { display: flex; justify-content: flex-end; min-width: 100px; }
 .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .badge.mysql  { background: rgba(0,117,143,.12); border: 1px solid rgba(0,117,143,.3); color: #00759f; }
 .badge.sqlite { background: rgba(49,120,198,.1);  border: 1px solid rgba(49,120,198,.25); color: #60a5fa; }

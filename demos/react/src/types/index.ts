@@ -1,6 +1,7 @@
+import type { MetricKey, MonthKey } from '../i18n/translations'
+
 export interface Metric {
-  id: string
-  label: string
+  id: MetricKey
   value: number
   unit: string
   change: number
@@ -9,7 +10,7 @@ export interface Metric {
 }
 
 export interface DataPoint {
-  month: string
+  monthKey: MonthKey
   revenue: number
   users: number
   conversions: number

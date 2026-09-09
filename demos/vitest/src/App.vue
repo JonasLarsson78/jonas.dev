@@ -1,46 +1,33 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import LanguageToggle from '../../_shared/vue/LanguageToggle.vue'
+import { useLocale } from './composables/useLocale'
+import type { Tab } from './i18n/translations'
 
 const portfolioUrl = '/'
-type Tab = 'runner' | 'code' | 'coverage'
+const { t } = useLocale()
 const activeTab = ref<Tab>('runner')
+const tabIds: Tab[] = ['runner', 'code', 'coverage']
 const isRunning = ref(false)
 
 interface TestResult { name: string; status: 'pass' | 'fail' | 'skip' | 'pending'; ms: number; error?: string }
 interface TestSuite { file: string; tests: TestResult[]; expanded: boolean }
 
-const suites = ref<TestSuite[]>([
-  {
-    file: 'stores/tasks.test.ts',
-    expanded: true,
-    tests: [
-      { name: 'adds a task to the store', status: 'pending', ms: 0 },
-      { name: 'moves task to in-progress', status: 'pending', ms: 0 },
-      { name: 'deletes a task by id', status: 'pending', ms: 0 },
-      { name: 'filters tasks by status', status: 'pending', ms: 0 },
-      { name: 'computed: tasksByStatus returns correct tasks', status: 'pending', ms: 0 },
-    ],
-  },
-  {
-    file: 'components/TaskCard.test.ts',
-    expanded: true,
-    tests: [
-      { name: 'renders task title', status: 'pending', ms: 0 },
-      { name: 'shows priority dot with correct color', status: 'pending', ms: 0 },
-      { name: 'emits delete event on button click', status: 'pending', ms: 0 },
-      { name: 'applies done class when task.done is true', status: 'pending', ms: 0 },
-    ],
-  },
-  {
-    file: 'utils/formatDate.test.ts',
-    expanded: true,
-    tests: [
-      { name: 'formats ISO date to readable string', status: 'pending', ms: 0 },
-      { name: 'returns "Today" for current date', status: 'pending', ms: 0 },
-      { name: 'handles invalid date gracefully', status: 'pending', ms: 0 },
-    ],
-  },
-])
+function buildSuites(): TestSuite[] {
+  const tv = t.value
+  return [
+    { file: tv.suites.tasksFile, expanded: true, tests: tv.suites.tasks.map(name => ({ name, status: 'pending' as const, ms: 0 })) },
+    { file: tv.suites.cardFile,  expanded: true, tests: tv.suites.cards.map(name => ({ name, status: 'pending' as const, ms: 0 })) },
+    { file: tv.suites.dateFile,  expanded: true, tests: tv.suites.dates.map(name => ({ name, status: 'pending' as const, ms: 0 })) },
+  ]
+}
+
+const suites = ref<TestSuite[]>(buildSuites())
+
+watch(t, () => {
+  if (isRunning.value) return
+  suites.value = buildSuites()
+})
 
 const RESULTS: TestResult['status'][] = ['pass','pass','pass','pass','pass','pass','pass','pass','pass','pass','pass','pass','fail']
 const FAIL_IDX = 12
@@ -162,27 +149,26 @@ function coverageColor(n: number) {
 <template>
   <div class="app">
     <div class="topbar">
-      <a :href="portfolioUrl" class="back-link">← Portfolio</a>
+      <a :href="portfolioUrl" class="back-link">← {{ t.topbar.back }}</a>
       <div class="topbar-center">
         <span class="badge vitest">Vitest</span>
         <span class="badge vue-test">@vue/test-utils</span>
         <span class="badge pinia-test">pinia testing</span>
       </div>
-      <div style="width:100px" />
+      <div class="topbar-right">
+        <LanguageToggle />
+      </div>
     </div>
 
     <div class="container">
       <div class="page-header">
-        <h1 class="page-title">Vitest</h1>
-        <p class="page-subtitle">
-          Vitest is Vite-native unit testing — same config, same transforms, 10× faster than Jest.
-          These tests target the Pinia store and Vue components from the Kanban demo.
-        </p>
+        <h1 class="page-title">{{ t.header.title }}</h1>
+        <p class="page-subtitle">{{ t.header.subtitle }}</p>
       </div>
 
       <div class="tabs">
-        <button v-for="[k,l] in [['runner','Test Runner'],['code','Test Code'],['coverage','Coverage']]"
-          :key="k" class="tab" :class="{ active: activeTab === k }" @click="activeTab = (k as Tab)">{{ l }}</button>
+        <button v-for="tab in tabIds" :key="tab"
+          class="tab" :class="{ active: activeTab === tab }" @click="activeTab = tab">{{ t.tabs[tab] }}</button>
       </div>
 
       <!-- Runner -->
@@ -190,10 +176,10 @@ function coverageColor(n: number) {
         <div class="runner-header">
           <button class="run-btn" :class="{ running: isRunning }" :disabled="isRunning" @click="runTests">
             <span v-if="isRunning" class="spinner" />
-            {{ isRunning ? 'Running…' : '▶  Run tests' }}
+            {{ isRunning ? t.runner.running : t.runner.runBtn }}
           </button>
           <div v-if="totals.done" class="summary" :class="totals.fail ? 'has-fail' : 'all-pass'">
-            {{ totals.pass }} passed · {{ totals.fail }} failed · {{ totals.ms }}ms
+            {{ t.runner.summary(totals.pass, totals.fail, totals.ms) }}
           </div>
         </div>
 
@@ -204,7 +190,7 @@ function coverageColor(n: number) {
               <span class="suite-file">{{ suite.file }}</span>
               <span class="suite-counts">
                 <span class="pass-count">{{ suite.tests.filter(t => t.status === 'pass').length }}</span>
-                <span v-if="suite.tests.some(t => t.status === 'fail')" class="fail-count">{{ suite.tests.filter(t => t.status === 'fail').length }} fail</span>
+                <span v-if="suite.tests.some(test => test.status === 'fail')" class="fail-count">{{ t.runner.failCount(suite.tests.filter(test => test.status === 'fail').length) }}</span>
               </span>
             </button>
             <div v-if="suite.expanded" class="test-list">
@@ -213,8 +199,8 @@ function coverageColor(n: number) {
                 <span class="test-name" :class="{ 'test-fail': test.status === 'fail' }">{{ test.name }}</span>
                 <span v-if="test.ms" class="test-ms">{{ test.ms }}ms</span>
               </div>
-              <div v-if="suite.tests.some(t => t.error)" class="error-block">
-                <pre>{{ suite.tests.find(t => t.error)?.error }}</pre>
+              <div v-if="suite.tests.some(test => test.error)" class="error-block">
+                <pre>{{ suite.tests.find(test => test.error)?.error }}</pre>
               </div>
             </div>
           </div>
@@ -225,11 +211,11 @@ function coverageColor(n: number) {
       <div v-else-if="activeTab === 'code'" class="panel">
         <div class="split">
           <div>
-            <div class="code-label">stores/tasks.test.ts — Pinia store tests</div>
+            <div class="code-label">{{ t.code.storeLabel }}</div>
             <pre class="test-code">{{ STORE_TEST }}</pre>
           </div>
           <div>
-            <div class="code-label">components/TaskCard.test.ts — Vue component tests</div>
+            <div class="code-label">{{ t.code.componentLabel }}</div>
             <pre class="test-code">{{ COMPONENT_TEST }}</pre>
           </div>
         </div>
@@ -237,10 +223,10 @@ function coverageColor(n: number) {
 
       <!-- Coverage -->
       <div v-else-if="activeTab === 'coverage'" class="panel">
-        <div class="code-label" style="margin-bottom:16px">Coverage report — v8 provider</div>
+        <div class="code-label" style="margin-bottom:16px">{{ t.coverage.reportLabel }}</div>
         <div class="coverage-table">
           <div class="cov-header">
-            <span>File</span><span>Statements</span><span>Branches</span><span>Functions</span>
+            <span>{{ t.coverage.headers.file }}</span><span>{{ t.coverage.headers.stmts }}</span><span>{{ t.coverage.headers.branch }}</span><span>{{ t.coverage.headers.funcs }}</span>
           </div>
           <div v-for="row in COVERAGE" :key="row.file" class="cov-row">
             <span class="cov-file">{{ row.file }}</span>
@@ -272,6 +258,7 @@ export default defineConfig({
 .back-link { font-size: 13px; color: #64748b; text-decoration: none; font-weight: 500; }
 .back-link:hover { color: #e2e8f0; }
 .topbar-center { display: flex; gap: 6px; flex-wrap: wrap; }
+.topbar-right { display: flex; justify-content: flex-end; min-width: 100px; }
 .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .badge.vitest    { background: rgba(252,211,77,.12); border: 1px solid rgba(252,211,77,.3); color: #fcd34d; }
 .badge.vue-test  { background: rgba(66,184,131,.1); border: 1px solid rgba(66,184,131,.25); color: #42b883; }

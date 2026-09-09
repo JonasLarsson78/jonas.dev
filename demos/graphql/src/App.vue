@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import LanguageToggle from '../../_shared/vue/LanguageToggle.vue'
+import { useLocale } from './composables/useLocale'
+import type { ActiveTab } from './i18n/translations'
 
 const GQL_URL      = '/api/graphql'
 const portfolioUrl = '/'
+const { t } = useLocale()
 
 interface GqlTask { id: string; title: string; status: string; priority: string; author: { name: string } }
 interface GqlUser { id: string; name: string; email: string; role: string; tasks: { id: string; title: string }[] }
 
-type ActiveTab = 'tasks' | 'user' | 'mutation' | 'schema'
 const activeTab = ref<ActiveTab>('tasks')
+const tabIds: ActiveTab[] = ['tasks', 'user', 'mutation', 'schema']
 
 // ── Tasks query ──────────────────────────────────────────────────────────────
 const statusFilter  = ref('')
@@ -82,7 +86,7 @@ async function fetchUser() {
     const json = await res.json() as { data?: { user: GqlUser | null }; errors?: { message: string }[] }
     if (json.errors) throw new Error(json.errors[0].message)
     user.value = json.data?.user ?? null
-    if (!user.value) userError.value = `No user with id "${userId.value}"`
+    if (!user.value) userError.value = t.value.hints.noUserFound(userId.value)
   } catch (e) {
     userError.value = (e as Error).message
   }
@@ -190,28 +194,28 @@ const priorityColor: Record<string, string> = {
 <template>
   <div class="app">
     <div class="topbar">
-      <a :href="portfolioUrl" class="back-link">← Portfolio</a>
+      <a :href="portfolioUrl" class="back-link">← {{ t.topbar.back }}</a>
       <div class="topbar-center">
         <span class="badge gql">GraphQL</span>
         <span class="badge node">graphql-yoga</span>
         <span class="badge ts">TypeScript</span>
       </div>
-      <a href="/api/graphql" target="_blank" class="graphiql-link">Open GraphiQL →</a>
+      <div class="topbar-right">
+        <a href="/api/graphql" target="_blank" class="graphiql-link">{{ t.topbar.graphiqlLink }}</a>
+        <LanguageToggle />
+      </div>
     </div>
 
     <div class="container">
       <div class="page-header">
-        <h1 class="page-title">GraphQL Demo</h1>
-        <p class="page-subtitle">
-          Live queries and mutations against a real GraphQL API (graphql-yoga on port 4001).
-          Type-safe schema with nested resolvers, enums, and filtering.
-        </p>
+        <h1 class="page-title">{{ t.header.title }}</h1>
+        <p class="page-subtitle">{{ t.header.subtitle }}</p>
       </div>
 
       <div class="tabs">
-        <button v-for="t in (['tasks','user','mutation','schema'] as ActiveTab[])" :key="t"
-          class="tab" :class="{ active: activeTab === t }" @click="activeTab = t">
-          {{ { tasks: 'Query: tasks', user: 'Query: user(id)', mutation: 'Mutation: createTask', schema: 'Schema' }[t] }}
+        <button v-for="tab in tabIds" :key="tab"
+          class="tab" :class="{ active: activeTab === tab }" @click="activeTab = tab">
+          {{ t.tabs[tab] }}
         </button>
       </div>
 
@@ -219,32 +223,32 @@ const priorityColor: Record<string, string> = {
       <div v-if="activeTab === 'tasks'" class="panel">
         <div class="split">
           <div class="code-side">
-            <div class="code-label">Query</div>
+            <div class="code-label">{{ t.labels.query }}</div>
             <pre class="gql-code">{{ TASKS_QUERY }}</pre>
-            <div class="code-label" style="margin-top:16px">Variables</div>
+            <div class="code-label" style="margin-top:16px">{{ t.labels.variables }}</div>
             <div class="var-row">
               <select v-model="statusFilter" class="gql-select">
-                <option value="">status: (any)</option>
+                <option value="">{{ t.hints.statusAny }}</option>
                 <option value="todo">todo</option>
                 <option value="in_progress">in_progress</option>
                 <option value="done">done</option>
               </select>
               <select v-model="priorityFilter" class="gql-select">
-                <option value="">priority: (any)</option>
+                <option value="">{{ t.hints.priorityAny }}</option>
                 <option value="low">low</option>
                 <option value="medium">medium</option>
                 <option value="high">high</option>
               </select>
             </div>
             <button class="run-btn" :disabled="tasksLoading" @click="fetchTasks">
-              {{ tasksLoading ? 'Running…' : '▶  Run query' }}
+              {{ tasksLoading ? t.buttons.running : t.buttons.runQuery }}
             </button>
           </div>
 
           <div class="result-side">
-            <div class="code-label">Response</div>
+            <div class="code-label">{{ t.labels.response }}</div>
             <div v-if="tasksError" class="error-box">{{ tasksError }}</div>
-            <div v-else-if="!tasks.length && !tasksLoading" class="empty-hint">Click "Run query" to execute</div>
+            <div v-else-if="!tasks.length && !tasksLoading" class="empty-hint">{{ t.hints.runQueryToExecute }}</div>
             <div v-else class="task-list">
               <div v-for="t in tasks" :key="t.id" class="gql-task">
                 <div class="gql-task-top">
@@ -266,37 +270,34 @@ const priorityColor: Record<string, string> = {
       <div v-else-if="activeTab === 'user'" class="panel">
         <div class="split">
           <div class="code-side">
-            <div class="code-label">Query</div>
+            <div class="code-label">{{ t.labels.query }}</div>
             <pre class="gql-code">{{ USER_QUERY }}</pre>
-            <div class="code-label" style="margin-top:16px">Variable</div>
+            <div class="code-label" style="margin-top:16px">{{ t.labels.variable }}</div>
             <div class="var-row">
               <select v-model="userId" class="gql-select" style="flex:1">
-                <option value="u1">u1 — Jonas Larsson</option>
-                <option value="u2">u2 — Anna Svensson</option>
-                <option value="u3">u3 — Erik Berg</option>
-                <option value="u99">u99 — (not found)</option>
+                <option v-for="u in t.users" :key="u.id" :value="u.id">{{ u.label }}</option>
               </select>
             </div>
             <button class="run-btn" :disabled="userLoading" @click="fetchUser">
-              {{ userLoading ? 'Running…' : '▶  Run query' }}
+              {{ userLoading ? t.buttons.running : t.buttons.runQuery }}
             </button>
           </div>
 
           <div class="result-side">
-            <div class="code-label">Response</div>
+            <div class="code-label">{{ t.labels.response }}</div>
             <div v-if="userError" class="error-box">{{ userError }}</div>
-            <div v-else-if="!user" class="empty-hint">Click "Run query" to execute</div>
+            <div v-else-if="!user" class="empty-hint">{{ t.hints.runQueryToExecute }}</div>
             <div v-else class="user-card">
               <div class="user-name">{{ user.name }}</div>
               <div class="user-meta">
                 <span>{{ user.email }}</span>
                 <span class="pill role" :class="user.role">{{ user.role }}</span>
               </div>
-              <div class="code-label" style="margin-top:14px">tasks (nested resolver)</div>
-              <div v-for="t in user.tasks" :key="t.id" class="nested-task">
-                <span class="gql-id">{{ t.id }}</span>{{ t.title }}
+              <div class="code-label" style="margin-top:14px">{{ t.labels.nestedResolver }}</div>
+              <div v-for="ut in user.tasks" :key="ut.id" class="nested-task">
+                <span class="gql-id">{{ ut.id }}</span>{{ ut.title }}
               </div>
-              <div v-if="!user.tasks.length" class="empty-hint" style="padding:8px 0">No tasks assigned</div>
+              <div v-if="!user.tasks.length" class="empty-hint" style="padding:8px 0">{{ t.hints.noTasksAssigned }}</div>
             </div>
           </div>
         </div>
@@ -306,26 +307,26 @@ const priorityColor: Record<string, string> = {
       <div v-else-if="activeTab === 'mutation'" class="panel">
         <div class="split">
           <div class="code-side">
-            <div class="code-label">Mutation</div>
+            <div class="code-label">{{ t.labels.mutation }}</div>
             <pre class="gql-code">{{ CREATE_MUTATION }}</pre>
-            <div class="code-label" style="margin-top:16px">Input</div>
-            <input v-model="newTitle" class="gql-input" placeholder="title: String!" />
+            <div class="code-label" style="margin-top:16px">{{ t.labels.input }}</div>
+            <input v-model="newTitle" class="gql-input" :placeholder="t.hints.titlePlaceholder" />
             <select v-model="newPriority" class="gql-select">
               <option value="low">priority: low</option>
               <option value="medium">priority: medium</option>
               <option value="high">priority: high</option>
             </select>
             <button class="run-btn" :disabled="mutationLoading || !newTitle.trim()" @click="createTask">
-              {{ mutationLoading ? 'Running…' : '▶  Run mutation' }}
+              {{ mutationLoading ? t.buttons.running : t.buttons.runMutation }}
             </button>
           </div>
 
           <div class="result-side">
-            <div class="code-label">Response</div>
+            <div class="code-label">{{ t.labels.response }}</div>
             <div v-if="mutationError" class="error-box">{{ mutationError }}</div>
-            <div v-else-if="!mutationResult" class="empty-hint">Click "Run mutation" to create a task</div>
+            <div v-else-if="!mutationResult" class="empty-hint">{{ t.hints.runMutationToCreate }}</div>
             <div v-else class="gql-task created">
-              <div class="created-label">✅ Task created</div>
+              <div class="created-label">{{ t.hints.taskCreated }}</div>
               <div class="gql-task-top">
                 <span class="gql-id">{{ mutationResult.id }}</span>
                 <span class="gql-title">{{ mutationResult.title }}</span>
@@ -342,7 +343,7 @@ const priorityColor: Record<string, string> = {
 
       <!-- SCHEMA -->
       <div v-else-if="activeTab === 'schema'" class="panel">
-        <div class="code-label" style="margin-bottom:14px">SDL — Schema Definition Language</div>
+        <div class="code-label" style="margin-bottom:14px">{{ t.labels.sdl }}</div>
         <pre class="gql-code schema-full">{{ SCHEMA }}</pre>
       </div>
     </div>
@@ -355,6 +356,7 @@ const priorityColor: Record<string, string> = {
 .back-link { font-size: 13px; color: #64748b; text-decoration: none; font-weight: 500; transition: color .15s; }
 .back-link:hover { color: #e2e8f0; }
 .topbar-center { display: flex; gap: 6px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
 .graphiql-link { font-size: 12px; color: #e10098; text-decoration: none; font-weight: 600; transition: opacity .15s; }
 .graphiql-link:hover { opacity: .7; }
 .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }

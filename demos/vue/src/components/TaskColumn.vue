@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import TaskCard from './TaskCard.vue'
 import type { Task, TaskStatus, TaskPriority } from '@/types'
 import { useTaskStore } from '@/stores/tasks'
+import { useLocale } from '../composables/useLocale'
 
 const props = defineProps<{
   id: TaskStatus
@@ -12,6 +13,7 @@ const props = defineProps<{
 }>()
 
 const store = useTaskStore()
+const { t } = useLocale()
 const showAddForm = ref(false)
 const newTitle = ref('')
 const newDesc = ref('')
@@ -41,7 +43,7 @@ function submitTask() {
         <span class="column-label">{{ label }}</span>
         <span class="column-count">{{ tasks.length }}</span>
       </div>
-      <button class="add-btn" title="Add task" @click="showAddForm = !showAddForm">+</button>
+      <button class="add-btn" :title="t.addTask.tooltip" @click="showAddForm = !showAddForm">+</button>
     </div>
 
     <Transition name="slide-down">
@@ -49,23 +51,23 @@ function submitTask() {
         <input
           v-model="newTitle"
           class="form-input"
-          placeholder="Task title..."
+          :placeholder="t.addTask.titlePlaceholder"
           autofocus
         />
         <input
           v-model="newDesc"
           class="form-input"
-          placeholder="Description (optional)..."
+          :placeholder="t.addTask.descPlaceholder"
         />
         <div class="form-row">
           <select v-model="newPriority" class="form-select">
-            <option value="low">Low priority</option>
-            <option value="medium">Medium priority</option>
-            <option value="high">High priority</option>
+            <option value="low">{{ t.filters.lowPriority }}</option>
+            <option value="medium">{{ t.filters.mediumPriority }}</option>
+            <option value="high">{{ t.filters.highPriority }}</option>
           </select>
           <div class="form-actions">
-            <button type="button" class="btn-cancel" @click="showAddForm = false">Cancel</button>
-            <button type="submit" class="btn-submit">Add</button>
+            <button type="button" class="btn-cancel" @click="showAddForm = false">{{ t.addTask.cancel }}</button>
+            <button type="submit" class="btn-submit">{{ t.addTask.add }}</button>
           </div>
         </div>
       </form>
@@ -76,7 +78,7 @@ function submitTask() {
         <TaskCard v-for="task in tasks" :key="task.id" :task="task" />
       </TransitionGroup>
       <div v-if="tasks.length === 0" class="empty-state">
-        No tasks here
+        {{ t.emptyState }}
       </div>
     </div>
   </div>

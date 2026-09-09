@@ -1,23 +1,28 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, nextTick, onMounted, watch } from 'vue'
 import ChatMessage from './components/ChatMessage.vue'
+import LanguageToggle from '../../_shared/vue/LanguageToggle.vue'
+import { useLocale } from './composables/useLocale'
 import type { Message } from './types'
 
 const API_URL      = '/api/chat/stream'
 const portfolioUrl = '/'
 
+const { t } = useLocale()
+
 const messages = ref<Message[]>([
   {
     id: 'intro',
     role: 'assistant',
-    content: `Hi! I'm a demonstration of the **Claude API** integration in Jonas's portfolio.
-
-I'm currently running in **mock mode** (no API key configured), but the streaming pattern is identical to the real thing — Server-Sent Events from a Node.js proxy to Anthropic's API.
-
-Try asking me about: **Vue 3**, **React**, **TypeScript**, or this portfolio's architecture.`,
+    content: t.value.intro,
     timestamp: new Date(),
   },
 ])
+
+watch(t, () => {
+  const intro = messages.value.find(m => m.id === 'intro')
+  if (intro) intro.content = t.value.intro
+})
 
 const input = ref('')
 const loading = ref(false)
@@ -33,13 +38,6 @@ async function scrollToBottom() {
     chatEl.value.scrollTop = chatEl.value.scrollHeight
   }
 }
-
-const SUGGESTIONS = [
-  'How does the streaming work?',
-  'Tell me about Vue 3 vs React',
-  'What TypeScript patterns do you use?',
-  'How is the API key handled securely?',
-]
 
 async function send(text?: string) {
   const content = text ?? input.value.trim()
@@ -103,7 +101,7 @@ async function send(text?: string) {
           } else if (event.type === 'done') {
             msg.streaming = false
           } else if (event.type === 'error') {
-            msg.content += '\n\n_Error from API: ' + (event.error ?? 'unknown') + '_'
+            msg.content += t.value.errors.apiError(event.error ?? 'unknown')
             msg.streaming = false
           }
         } catch {
@@ -115,7 +113,7 @@ async function send(text?: string) {
     msg.streaming = false
   } catch (err) {
     const msg = messages.value.find(m => m.id === assistantId)!
-    msg.content = '_Could not connect to the API. Make sure the Node.js server is running on port 3003._'
+    msg.content = t.value.errors.apiUnreachable
     msg.streaming = false
   }
 
@@ -137,14 +135,16 @@ onMounted(scrollToBottom)
   <div class="app">
     <!-- Topbar -->
     <div class="topbar">
-      <a :href="portfolioUrl" class="back-link">← Portfolio</a>
+      <a :href="portfolioUrl" class="back-link">← {{ t.topbar.back }}</a>
       <div class="topbar-center">
         <span class="badge vue">Vue 3</span>
         <span class="badge node">Node.js</span>
         <span class="badge claude">Claude API</span>
-        <span class="badge mock">Mock mode</span>
+        <span class="badge mock">{{ t.topbar.mockBadge }}</span>
       </div>
-      <div class="topbar-right" />
+      <div class="topbar-right">
+        <LanguageToggle />
+      </div>
     </div>
 
     <!-- Chat layout -->
@@ -152,7 +152,7 @@ onMounted(scrollToBottom)
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-section">
-          <div class="sidebar-label">Architecture</div>
+          <div class="sidebar-label">{{ t.sidebar.architecture }}</div>
           <div class="arch-flow">
             <div class="arch-node frontend">Vue 3 frontend</div>
             <div class="arch-arrow">↓ fetch (SSE)</div>
@@ -163,10 +163,10 @@ onMounted(scrollToBottom)
         </div>
 
         <div class="sidebar-section">
-          <div class="sidebar-label">Try asking</div>
+          <div class="sidebar-label">{{ t.sidebar.tryAsking }}</div>
           <div class="suggestions">
             <button
-              v-for="s in SUGGESTIONS"
+              v-for="s in t.suggestions"
               :key="s"
               class="suggestion"
               @click="send(s)"
@@ -177,22 +177,20 @@ onMounted(scrollToBottom)
         </div>
 
         <div class="sidebar-section">
-          <div class="sidebar-label">Status</div>
+          <div class="sidebar-label">{{ t.sidebar.status }}</div>
           <div class="status-item">
             <span class="status-dot mock" />
-            <span class="status-text">Mock mode active</span>
+            <span class="status-text">{{ t.sidebar.mockActive }}</span>
           </div>
-          <div class="status-note">
-            Set <code>ANTHROPIC_API_KEY</code> in Node API environment to enable real Claude responses.
-          </div>
+          <div class="status-note" v-html="t.sidebar.statusNote" />
         </div>
       </aside>
 
       <!-- Chat -->
       <main class="chat-main">
         <div class="chat-header">
-          <div class="chat-title">AI Chat</div>
-          <div class="chat-subtitle">Claude API · Streaming · Secure proxy pattern</div>
+          <div class="chat-title">{{ t.chat.title }}</div>
+          <div class="chat-subtitle">{{ t.chat.subtitle }}</div>
         </div>
 
         <div ref="chatEl" class="messages">
@@ -211,7 +209,7 @@ onMounted(scrollToBottom)
           <textarea
             v-model="input"
             class="chat-input"
-            placeholder="Ask about Vue, React, TypeScript, Node.js, or this portfolio..."
+            :placeholder="t.chat.inputPlaceholder"
             rows="1"
             :disabled="loading"
             @keydown="handleKeydown"
@@ -225,7 +223,7 @@ onMounted(scrollToBottom)
             <span v-else>↑</span>
           </button>
         </div>
-        <div class="input-hint">Enter to send · Shift+Enter for new line</div>
+        <div class="input-hint">{{ t.chat.inputHint }}</div>
       </main>
     </div>
   </div>
@@ -263,7 +261,11 @@ html { background: #060610; color: #e2e8f0; font-family: 'Inter', sans-serif; }
 .back-link:hover { color: #e2e8f0; }
 
 .topbar-center { display: flex; gap: 6px; }
-.topbar-right { width: 100px; }
+.topbar-right {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 100px;
+}
 
 .badge {
   padding: 4px 10px;
@@ -363,7 +365,7 @@ html { background: #060610; color: #e2e8f0; font-family: 'Inter', sans-serif; }
   color: #334155;
   line-height: 1.5;
 }
-.status-note code {
+.status-note :deep(code) {
   font-family: 'JetBrains Mono', monospace;
   color: #475569;
   background: rgba(255,255,255,0.04);

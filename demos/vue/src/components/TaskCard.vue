@@ -1,22 +1,27 @@
 <script setup lang="ts">
-import type { Task, TaskStatus } from '@/types'
+import { computed } from 'vue'
+import type { Task, TaskStatus, TaskPriority } from '@/types'
 import { useTaskStore } from '@/stores/tasks'
+import { useLocale } from '../composables/useLocale'
 
 const props = defineProps<{ task: Task }>()
 
 const store = useTaskStore()
+const { t } = useLocale()
 
-const priorityConfig = {
-  low: { label: 'Low', color: '#22c55e' },
-  medium: { label: 'Medium', color: '#f59e0b' },
-  high: { label: 'High', color: '#ef4444' },
+const priorityColors: Record<TaskPriority, string> = {
+  low: '#22c55e',
+  medium: '#f59e0b',
+  high: '#ef4444',
 }
 
-const statusOptions: { value: TaskStatus; label: string }[] = [
-  { value: 'todo', label: 'To Do' },
-  { value: 'in-progress', label: 'In Progress' },
-  { value: 'done', label: 'Done' },
-]
+const statusOptions = computed<{ value: TaskStatus; label: string }[]>(() => [
+  { value: 'todo',        label: t.value.columns.todo },
+  { value: 'in-progress', label: t.value.columns['in-progress'] },
+  { value: 'done',        label: t.value.columns.done },
+])
+
+const priorityTooltip = computed(() => t.value.taskCard.priorityTooltip(t.value.priorities[props.task.priority]))
 
 function moveTo(status: TaskStatus) {
   store.moveTask(props.task.id, status)
@@ -28,14 +33,14 @@ function moveTo(status: TaskStatus) {
     <div class="task-card-top">
       <div
         class="priority-dot"
-        :style="{ background: priorityConfig[task.priority].color }"
-        :title="priorityConfig[task.priority].label + ' priority'"
+        :style="{ background: priorityColors[task.priority] }"
+        :title="priorityTooltip"
       />
-      <div class="task-title">{{ task.title }}</div>
-      <button class="delete-btn" title="Delete task" @click.stop="store.deleteTask(task.id)">×</button>
+      <div class="task-title">{{ store.displayTitle(task) }}</div>
+      <button class="delete-btn" :title="t.taskCard.deleteTooltip" @click.stop="store.deleteTask(task.id)">×</button>
     </div>
 
-    <p class="task-desc">{{ task.description }}</p>
+    <p class="task-desc">{{ store.displayDesc(task) }}</p>
 
     <div class="task-tags">
       <span v-for="tag in task.tags" :key="tag" class="tag">{{ tag }}</span>
